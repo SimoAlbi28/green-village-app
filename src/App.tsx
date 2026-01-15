@@ -184,6 +184,20 @@ export default function App() {
 
   // ===== FOLDER FUNCTIONS =====
   const apriCartella = (anno: string) => {
+    // Collassa tutte le manutenzioni
+    setFolders((prev) => ({
+      ...prev,
+      [anno]: {
+        ...prev[anno],
+        manutenzioni: Object.entries(prev[anno].manutenzioni).reduce(
+          (acc, [id, manutenzione]) => ({
+            ...acc,
+            [id]: { ...manutenzione, expanded: false },
+          }),
+          {}
+        ),
+      },
+    }))
     setCurrentAnno(anno)
     setPage('folder')
   }
