@@ -474,27 +474,46 @@ export default function App() {
   }
 
   const gestioneScan = (text: string) => {
-    if (!currentAnno) return
     const nome = text.trim().toUpperCase()
     if (!nome) return
 
-    const manutenzioniAttuali = folders[currentAnno].manutenzioni
-    if (Object.values(manutenzioniAttuali).some((m) => m.nome === nome)) {
-      alert(`Manutenzione "${nome}" già presente.`)
+    if (!currentAnno) {
+      fermaScanner()
+      alert('Apri prima una cartella su cui creare la manutenzione.')
       return
     }
 
-    const id = Date.now().toString()
-    setFolders((prev) => ({
-      ...prev,
-      [currentAnno]: {
-        ...prev[currentAnno],
-        manutenzioni: {
-          ...prev[currentAnno].manutenzioni,
-          [id]: { nome, note: [], expanded: false },
+    // Ferma lo scanner per evitare letture multiple mentre gestiamo il risultato
+    fermaScanner()
+
+    // Cerca solo nella cartella corrente
+    const manutenzioniAttuali = folders[currentAnno].manutenzioni
+    const esistente = Object.entries(manutenzioniAttuali).find(
+      ([_, m]) => m.nome === nome,
+    )
+
+    if (esistente) {
+      const [idMatch] = esistente
+      setFolders((prev) => ({
+        ...prev,
+        [currentAnno]: {
+          ...prev[currentAnno],
+          manutenzioni: Object.fromEntries(
+            Object.entries(prev[currentAnno].manutenzioni).map(([id, manut]) => [
+              id,
+              { ...manut, expanded: id === idMatch },
+            ]),
+          ),
         },
-      },
-    }))
+      }))
+      setPage('folder')
+      setSearchInput('')
+      return
+    }
+
+    // QR nuovo nella cartella corrente: precompila il nome e apri il modal di creazione
+    setNomeInput(nome)
+    setShowNomeModal(true)
   }
 
   // ===== RENDER HOME =====
