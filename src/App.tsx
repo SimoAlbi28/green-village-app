@@ -13,6 +13,7 @@ type Manutenzione = {
   nome: string
   note: Note[]
   expanded: boolean
+  qrId?: string
 }
 
 type Cartella = {
@@ -46,6 +47,7 @@ export default function App() {
   const [folderNameInput, setFolderNameInput] = useState('Manutenzioni')
   const [searchInput, setSearchInput] = useState('')
   const [nomeInput, setNomeInput] = useState('')
+  const [pendingQrId, setPendingQrId] = useState<string | null>(null)
   const [showNomeModal, setShowNomeModal] = useState(false)
   const [showYearModal, setShowYearModal] = useState(false)
   const [scannerActive, setScannerActive] = useState(false)
@@ -246,11 +248,12 @@ export default function App() {
         ...prev[currentAnno],
         manutenzioni: {
           ...prev[currentAnno].manutenzioni,
-          [id]: { nome, note: [], expanded: true },
+          [id]: { nome, note: [], expanded: true, qrId: pendingQrId || undefined },
         },
       },
     }))
     setNomeInput('')
+    setPendingQrId(null)
     setShowNomeModal(false)
   }
 
@@ -474,8 +477,8 @@ export default function App() {
   }
 
   const gestioneScan = (text: string) => {
-    const nome = text.trim().toUpperCase()
-    if (!nome) return
+    const raw = text.trim()
+    if (!raw) return
 
     if (!currentAnno) {
       fermaScanner()
@@ -486,14 +489,16 @@ export default function App() {
     // Ferma lo scanner per evitare letture multiple mentre gestiamo il risultato
     fermaScanner()
 
-    // Cerca solo nella cartella corrente
+    const nome = raw.toUpperCase()
     const manutenzioniAttuali = folders[currentAnno].manutenzioni
-    const esistente = Object.entries(manutenzioniAttuali).find(
-      ([_, m]) => m.nome === nome,
+
+    // 1) Match per qrId già salvato
+    const byQr = Object.entries(manutenzioniAttuali).find(
+      ([_, m]) => m.qrId && m.qrId === raw,
     )
 
-    if (esistente) {
-      const [idMatch] = esistente
+    if (byQr) {
+      const [idMatch] = byQr
       setFolders((prev) => ({
         ...prev,
         [currentAnno]: {
@@ -511,7 +516,36 @@ export default function App() {
       return
     }
 
-    // QR nuovo nella cartella corrente: apri il modal vuoto (nessun prefill)
+    // 2) Match per nome (compatibilità con vecchi dati senza qrId)
+    const byName = Object.entries(manutenzioniAttuali).find(
+      ([_, m]) => m.nome === nome,
+    )
+
+    if (byName) {
+      const [idMatch] = byName
+      setFolders((prev) => ({
+        ...prev,
+        [currentAnno]: {
+          ...prev[currentAnno],
+          manutenzioni: Object.fromEntries(
+            Object.entries(prev[currentAnno].manutenzioni).map(([id, manut]) => [
+              id,
+              {
+                ...manut,
+                expanded: id === idMatch,
+                qrId: id === idMatch ? raw : manut.qrId, // auto-collega il QR scansionato
+              },
+            ]),
+          ),
+        },
+      }))
+      setPage('folder')
+      setSearchInput('')
+      return
+    }
+
+    // 3) QR nuovo nella cartella corrente: salva il raw come qrId pending, modal vuoto per il nome
+    setPendingQrId(raw)
     setNomeInput('')
     setShowNomeModal(true)
   }
@@ -708,6 +742,7 @@ export default function App() {
                   onClick={() => {
                     setShowNomeModal(false)
                     setNomeInput('')
+                    setPendingQrId(null)
                   }}
                 >
                   Annulla
