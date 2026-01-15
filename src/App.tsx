@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
+import FolderCard from './components/FolderCard'
 import { Html5Qrcode } from 'html5-qrcode'
 
 // ===== TYPES =====
@@ -474,45 +475,15 @@ export default function App() {
 
         <div id="folders-list" className={cartelleOrdinate.length === 1 ? 'single-folder' : ''}>
           {cartelleOrdinate.map(([anno, cartella]) => (
-            <div
+            <FolderCard
               key={anno}
-              className="folder"
-              onClick={() => apriCartella(anno)}
-            >
-              <h2>{cartella.nome}</h2>
-              <div className="year">{cartella.anno}</div>
-              <img
-                src="/folder-icon.jpg"
-                alt="Icona cartella"
-                className="folder-icon"
-              />
-              <div
-                className="btns"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  title="Rinomina"
-                  className="btn-rename"
-                  onClick={() => rinominaCartella(anno)}
-                >
-                  ✏️
-                </button>
-                <button
-                  title="Elimina"
-                  className="btn-delete"
-                  onClick={() => eliminaCartella(anno)}
-                >
-                  🗑️
-                </button>
-                <button
-                  title="Copia tutto"
-                  className="btn-copy"
-                  onClick={() => copiaTuttoCartella(anno)}
-                >
-                  📋
-                </button>
-              </div>
-            </div>
+              nome={cartella.nome}
+              anno={cartella.anno}
+              onOpen={() => apriCartella(anno)}
+              onRename={() => rinominaCartella(anno)}
+              onDelete={() => eliminaCartella(anno)}
+              onCopy={() => copiaTuttoCartella(anno)}
+            />
           ))}
         </div>
 
@@ -690,9 +661,18 @@ export default function App() {
   }
 
   return (
-    <>
+    <div className="app-shell">
       {page === 'home' ? renderHome() : renderFolder()}
-    </>
+      <footer className="app-footer">
+        <a
+          href="https://github.com/SimoAlbi28"
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          GitHub: SimoAlbi28
+        </a>
+      </footer>
+    </div>
   )
 }
 
