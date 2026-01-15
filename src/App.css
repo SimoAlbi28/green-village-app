@@ -10,7 +10,7 @@ body {
   padding: 15px;
   padding-left: max(15px, env(safe-area-inset-left));
   padding-right: max(15px, env(safe-area-inset-right));
-  padding-top: max(15px, env(safe-area-inset-top));
+  padding-top: max(35px, env(safe-area-inset-top));
   padding-bottom: max(15px, env(safe-area-inset-bottom));
   max-width: 480px;
   width: 100%;
@@ -231,7 +231,7 @@ body {
   padding: 15px;
   padding-left: max(15px, env(safe-area-inset-left));
   padding-right: max(15px, env(safe-area-inset-right));
-  padding-top: max(15px, env(safe-area-inset-top));
+  padding-top: max(35px, env(safe-area-inset-top));
   padding-bottom: max(15px, env(safe-area-inset-bottom));
   margin: 0 auto;
   max-width: 480px;
