@@ -56,11 +56,21 @@ export default function App() {
 
   const readerRef = useRef<HTMLDivElement>(null)
   const html5QrCodeRef = useRef<any>(null)
+  const nomeInputRef = useRef<HTMLInputElement>(null)
 
   // Salva folders nel localStorage
   useEffect(() => {
     localStorage.setItem('folders', JSON.stringify(folders))
   }, [folders])
+
+  // Focus automatico quando si apre il modal manutenzione
+  useEffect(() => {
+    if (showNomeModal && nomeInputRef.current) {
+      setTimeout(() => {
+        nomeInputRef.current?.focus()
+      }, 100)
+    }
+  }, [showNomeModal])
 
   // ===== HOME FUNCTIONS =====
   const ordinaCartelle = () => {
@@ -632,6 +642,7 @@ export default function App() {
               <input
                 type="text"
                 id="nomeInput"
+                ref={nomeInputRef}
                 value={nomeInput}
                 onChange={(e) => setNomeInput(e.target.value)}
                 onKeyPress={(e) => {
@@ -767,7 +778,8 @@ function ManutenzionCard({
               value={descInput}
               onChange={(e) => setDescInput(e.target.value)}
               maxLength={300}
-              rows={3}
+              rows={4}
+              className="note-textarea"
             ></textarea>
             <div style={{ textAlign: 'center', marginTop: '10px' }}>
               <button className="btn-green" onClick={handleAddNote}>

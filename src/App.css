@@ -613,10 +613,11 @@ h2 {
   display: block;
   margin: 0 auto;
   text-align: left;
-  resize: vertical;
+  resize: none;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   font-family: 'Segoe UI', sans-serif;
+  overflow-y: auto;
 }
 
 .btns-manutenzione {
@@ -839,7 +840,7 @@ button {
   max-width: 130px;
   transition: background-color 0.3s ease;
   margin: 5px 3px;
-  border: none;
+  border: 1px solid black;
   display: inline-block;
   text-align: center;
   box-sizing: border-box;
