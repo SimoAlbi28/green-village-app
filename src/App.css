@@ -264,6 +264,7 @@ body {
   flex-direction: column;
   gap: 4px;
   margin-bottom: 30px;
+  margin-top: 30px;
 }
 
 .title-top {
