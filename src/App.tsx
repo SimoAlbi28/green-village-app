@@ -628,7 +628,7 @@ export default function App() {
           <input
             id="search-input"
             type="text"
-            placeholder="Inserire Nome..."
+            placeholder="Manutenzione..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             autoComplete="off"
@@ -638,7 +638,7 @@ export default function App() {
             onClick={() => setSearchInput('')}
             className="btn-blue"
           >
-            Mostra tutti
+            Reset
           </button>
         </div>
 
