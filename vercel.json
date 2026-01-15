@@ -4,5 +4,12 @@
   "devCommand": "pnpm dev",
   "env": {
     "NODE_VERSION": "20.x"
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
+
