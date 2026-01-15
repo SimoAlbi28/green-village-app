@@ -57,11 +57,27 @@ export default function App() {
   const readerRef = useRef<HTMLDivElement>(null)
   const html5QrCodeRef = useRef<any>(null)
   const nomeInputRef = useRef<HTMLInputElement>(null)
+  const manutenzioniListRef = useRef<HTMLDivElement>(null)
+  const pageFolderRef = useRef<HTMLDivElement>(null)
 
   // Salva folders nel localStorage
   useEffect(() => {
     localStorage.setItem('folders', JSON.stringify(folders))
   }, [folders])
+
+  // Resetta scroll della pagina quando si entra in una cartella
+  useEffect(() => {
+    if (currentAnno) {
+      if (manutenzioniListRef.current) {
+        manutenzioniListRef.current.scrollTop = 0
+      }
+      if (pageFolderRef.current) {
+        pageFolderRef.current.scrollTop = 0
+      }
+      // Resetta anche il body e html
+      window.scrollTo(0, 0)
+    }
+  }, [currentAnno])
 
   // Focus automatico quando si apre il modal manutenzione
   useEffect(() => {
@@ -572,7 +588,7 @@ export default function App() {
     )
 
     return (
-      <div className="page-folder">
+      <div className="page-folder" ref={pageFolderRef}>
         <header id="tit1">
           <div className="title-top">MANUTENZIONI</div>
           <div style={{ fontSize: '1.2rem', color: 'white', marginTop: '5px' }}>
@@ -627,7 +643,7 @@ export default function App() {
         </div>
 
         <h2>⚙️ Registro Manutenzioni ⚙️</h2>
-        <div id="manutenzioni-list">
+        <div id="manutenzioni-list" ref={manutenzioniListRef}>
           {manutenzioniFiltered.map(([id, data]) => (
             <ManutenzionCard
               key={id}
