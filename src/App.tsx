@@ -511,8 +511,8 @@ export default function App() {
       return
     }
 
-    // QR nuovo nella cartella corrente: precompila il nome e apri il modal di creazione
-    setNomeInput(nome)
+    // QR nuovo nella cartella corrente: apri il modal vuoto (nessun prefill)
+    setNomeInput('')
     setShowNomeModal(true)
   }
 
