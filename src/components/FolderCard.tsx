@@ -1,4 +1,4 @@
-type FolderCardProps = {
+interface FolderCardProps {
   nome: string
   anno: string
   imageSrc?: string
@@ -17,9 +17,11 @@ export default function FolderCard({
   onDelete,
   onCopy,
 }: FolderCardProps) {
+  const displayName = nome.length > 15 ? `${nome.slice(0, 15)}…` : nome
+
   return (
     <div className="folder" onClick={onOpen}>
-      <h2>{nome}</h2>
+      <h2 title={nome}>{displayName}</h2>
       <div className="year">{anno}</div>
       <img src={imageSrc} alt="Icona cartella" className="folder-icon" />
 
@@ -30,23 +32,35 @@ export default function FolderCard({
         }}
       >
         <button
+          type="button"
           title="Rinomina"
           className="btn-rename"
-          onClick={onRename}
+          onClick={(e) => {
+            e.stopPropagation()
+            onRename()
+          }}
         >
           ✏️
         </button>
         <button
+          type="button"
           title="Elimina"
           className="btn-delete"
-          onClick={onDelete}
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete()
+          }}
         >
           🗑️
         </button>
         <button
+          type="button"
           title="Copia tutto"
           className="btn-copy"
-          onClick={onCopy}
+          onClick={(e) => {
+            e.stopPropagation()
+            onCopy()
+          }}
         >
           📋
         </button>
