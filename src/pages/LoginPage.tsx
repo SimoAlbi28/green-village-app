@@ -64,6 +64,10 @@ export default function LoginPage({ onGoToRegister, onGoToVerify }: LoginPagePro
         <button className="auth-btn-link" onClick={onGoToRegister}>
           Registrati
         </button>
+        <div className="auth-divider" />
+        <button className="auth-btn-link" onClick={onGoToVerify}>
+          Ho il codice
+        </button>
       </div>
     </div>
   )

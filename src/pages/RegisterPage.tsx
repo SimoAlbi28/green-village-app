@@ -95,7 +95,7 @@ export default function RegisterPage({ onGoToLogin, onGoToVerify }: RegisterPage
           ))}
         </select>
         <button className="auth-btn-primary" onClick={handleRegister} disabled={loading} style={{ display: 'block', margin: '4px auto 0' }}>
-          {loading ? 'Invio...' : 'Avanti'}
+          {loading ? 'Invio...' : 'Richiedi codice'}
         </button>
         <div className="auth-divider" />
         <button className="auth-btn-link" onClick={onGoToLogin}>

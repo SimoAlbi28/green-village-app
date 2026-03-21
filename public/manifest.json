@@ -11,21 +11,9 @@
   "icons": [
     {
       "src": "/logo-green-village.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/logo-green-village.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "/logo-green-village.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
     },
     {
       "src": "/logo-green-village.png",

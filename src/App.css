@@ -1189,6 +1189,7 @@ button {
 .profile-modal-tabs {
   display: flex;
   gap: 8px;
+  margin-top: 24px;
   margin-bottom: 20px;
 }
 
@@ -1404,6 +1405,50 @@ button {
   border-radius: 10px;
   font-size: 15px;
   font-weight: 500;
+}
+
+.consigliere-clickable {
+  cursor: pointer;
+}
+
+.consigliere-clickable:active {
+  background: #dce6ff;
+}
+
+.consigliere-arrow {
+  margin-left: auto;
+  font-size: 20px;
+  color: #999;
+  font-weight: 300;
+}
+
+.btn-back-consiglieri {
+  background: none;
+  border: none;
+  color: #1a3a6b;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  min-width: 0;
+  max-width: none;
+  text-align: left;
+}
+
+.consigliere-self {
+  background: #e8f0ff;
+  border: 2px solid #1a3a6b;
+  font-weight: 600;
+}
+
+.consigliere-tu {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1a3a6b;
+  background: #c8d8f8;
+  border-radius: 6px;
+  padding: 2px 7px;
 }
 
 .consigliere-initials {

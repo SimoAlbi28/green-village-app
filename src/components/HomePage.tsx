@@ -1,4 +1,6 @@
 import { useState } from 'react'
+
+const FAKE_PWD = '__FAKE_PWD__'
 import type { Folders, UserProfile } from '../types'
 import FolderCard from './FolderCard'
 import Header from './Header'
@@ -47,6 +49,7 @@ export default function HomePage({
 
   const [profileOpen, setProfileOpen] = useState(false)
   const [profileView, setProfileView] = useState<'profilo' | 'consiglieri'>('profilo')
+  const [selectedConsigliere, setSelectedConsigliere] = useState<UserProfile | null>(null)
 
   // Edit mode state
   const [editMode, setEditMode] = useState(false)
@@ -64,18 +67,20 @@ export default function HomePage({
 
   const initials = `${profile.nome[0] ?? ''}${profile.cognome[0] ?? ''}`.toUpperCase()
 
+  const isChangingPwd = editOldPassword !== '' && editOldPassword !== FAKE_PWD
+
   const hasChanges = () =>
     editNome !== profile.nome ||
     editCognome !== profile.cognome ||
     editTelefono !== (profile.telefono ?? '') ||
-    editOldPassword !== '' ||
+    isChangingPwd ||
     editPassword !== ''
 
   const enterEditMode = () => {
     setEditNome(profile.nome)
     setEditCognome(profile.cognome)
     setEditTelefono(profile.telefono ?? '')
-    setEditOldPassword('')
+    setEditOldPassword(FAKE_PWD)
     setEditPassword('')
     setEditPasswordConferma('')
     setShowOldPwd(false)
@@ -98,7 +103,7 @@ export default function HomePage({
       setSaveError('Nome e cognome sono obbligatori.')
       return
     }
-    if (editPassword && !editOldPassword) {
+    if (editPassword && !isChangingPwd) {
       setSaveError('Inserisci la password attuale per cambiarla.')
       return
     }
@@ -116,8 +121,8 @@ export default function HomePage({
       nome: editNome.trim(),
       cognome: editCognome.trim(),
       telefono: editTelefono.trim() || undefined,
-      oldPassword: editOldPassword || undefined,
-      newPassword: editPassword || undefined,
+      oldPassword: isChangingPwd ? editOldPassword : undefined,
+      newPassword: isChangingPwd && editPassword ? editPassword : undefined,
     })
     if (result?.error) {
       setSaveError(result.error)
@@ -234,13 +239,21 @@ export default function HomePage({
                   <input className="auth-input" type="tel" placeholder="Es. 333 1234567" value={editTelefono} onChange={(e) => setEditTelefono(e.target.value)} />
                 </div>
                 <div className="edit-field">
-                  <label>Password attuale <span style={{ fontWeight: 400, fontSize: 12, color: '#888' }}>(solo se vuoi cambiarla)</span></label>
+                  <label>Password attuale <span style={{ fontWeight: 400, fontSize: 12, color: '#888' }}>(clicca per cambiarla)</span></label>
                   <div className="pwd-input-row">
-                    <input className="auth-input" type={showOldPwd ? 'text' : 'password'} placeholder="••••••" value={editOldPassword} onChange={(e) => setEditOldPassword(e.target.value)} autoComplete="current-password" />
+                    <input
+                      className="auth-input"
+                      type={showOldPwd ? 'text' : 'password'}
+                      value={editOldPassword === FAKE_PWD ? 'fakepassword' : editOldPassword}
+                      onFocus={() => { if (editOldPassword === FAKE_PWD) setEditOldPassword('') }}
+                      onBlur={() => { if (editOldPassword === '') setEditOldPassword(FAKE_PWD) }}
+                      onChange={(e) => setEditOldPassword(e.target.value)}
+                      autoComplete="current-password"
+                    />
                     <button type="button" className="btn-show-pwd" onClick={() => setShowOldPwd(v => !v)}>{showOldPwd ? '🙈' : '👁️'}</button>
                   </div>
                 </div>
-                {editOldPassword && (
+                {isChangingPwd && (
                   <div className="edit-field">
                     <label>Nuova password</label>
                     <div className="pwd-input-row">
@@ -249,7 +262,7 @@ export default function HomePage({
                     </div>
                   </div>
                 )}
-                {editOldPassword && editPassword && (
+                {isChangingPwd && editPassword && (
                   <div className="edit-field">
                     <label>Conferma nuova password</label>
                     <div className="pwd-input-row">
@@ -267,17 +280,46 @@ export default function HomePage({
               </div>
             )}
 
-            {profileView === 'consiglieri' && (
+            {profileView === 'consiglieri' && !selectedConsigliere && (
               <div className="consiglieri-view">
                 <h3 className="consiglieri-title">Palazzina {profile.palazzina}</h3>
                 <ul className="consiglieri-list">
-                  {consiglieri.map((c) => (
-                    <li key={c.id} className="consigliere-item">
-                      <span className="consigliere-initials">{c.nome[0]}{c.cognome[0]}</span>
-                      <span>{c.nome} {c.cognome}</span>
-                    </li>
-                  ))}
+                  {[...consiglieri]
+                    .sort((a, b) => (a.id === profile.id ? -1 : b.id === profile.id ? 1 : 0))
+                    .map((c) => (
+                      <li
+                        key={c.id}
+                        className={`consigliere-item${c.id === profile.id ? ' consigliere-self' : ' consigliere-clickable'}`}
+                        onClick={() => c.id !== profile.id && setSelectedConsigliere(c)}
+                      >
+                        <span className="consigliere-initials">{c.nome[0]}{c.cognome[0]}</span>
+                        <span>{c.nome} {c.cognome}</span>
+                        {c.id === profile.id
+                          ? <span className="consigliere-tu">Tu</span>
+                          : <span className="consigliere-arrow">›</span>
+                        }
+                      </li>
+                    ))}
                 </ul>
+              </div>
+            )}
+
+            {profileView === 'consiglieri' && selectedConsigliere && (
+              <div className="consiglieri-view">
+                <button className="btn-back-consiglieri" onClick={() => setSelectedConsigliere(null)}>‹ Indietro</button>
+                <div className="profile-view" style={{ marginTop: 12 }}>
+                  <div className="profile-avatar">
+                    {selectedConsigliere.nome[0]}{selectedConsigliere.cognome[0]}
+                  </div>
+                  <p className="profile-name">{selectedConsigliere.nome} {selectedConsigliere.cognome}</p>
+                  <p className="profile-palazzina">Palazzina {selectedConsigliere.palazzina}</p>
+                  {selectedConsigliere.telefono && (
+                    <div className="profile-info-row">
+                      <span className="profile-info-label">📞</span>
+                      <span className="profile-info-value">{selectedConsigliere.telefono}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
