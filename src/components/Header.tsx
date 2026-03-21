@@ -3,10 +3,10 @@ interface HeaderProps {
   subtitle?: string
 }
 
-export default function Header({ title = 'HOME PAGE', subtitle = 'MANUTENZIONI' }: HeaderProps) {
+export default function Header({ title = 'MARONCELLI PALAZZINA G', subtitle = '' }: HeaderProps) {
   return (
     <header id="header">
-      <h1>{title}<br />{subtitle}</h1>
+      <h1>{title}{subtitle && <><br />{subtitle}</>}</h1>
     </header>
   )
 }

@@ -31,10 +31,13 @@ export default function HomePage({
   onDeleteFolder,
   onCopyFolder,
 }: HomePageProps) {
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i)
+
   const ordinaCartelle = () => {
     return Object.entries(folders).sort((a, b) => {
-      const annoA = parseInt(a[0])
-      const annoB = parseInt(b[0])
+      const annoA = parseInt(a[1].anno)
+      const annoB = parseInt(b[1].anno)
       return annoB - annoA
     })
   }
@@ -45,7 +48,7 @@ export default function HomePage({
     <div className="page-home">
       <Header />
 
-      <button id="btn-add-folder" onClick={() => onSetShowYearModal(true)}>
+      <button id="btn-add-folder" onClick={() => { onSetYearInput(String(currentYear)); onSetShowYearModal(true) }}>
         ➕ Nuova Cartella
       </button>
 
@@ -74,21 +77,18 @@ export default function HomePage({
               onChange={(e) => onSetFolderNameInput(e.target.value)}
               placeholder="Es. Manutenzioni"
               maxLength={15}
+              autoFocus
             />
             <label htmlFor="yearInput">Anno:</label>
-            <input
-              type="text"
+            <select
               id="yearInput"
               value={yearInput}
               onChange={(e) => onSetYearInput(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') onAddFolder()
-              }}
-              placeholder="Es. 2023"
-              maxLength={4}
-              inputMode="numeric"
-              autoFocus
-            />
+            >
+              {years.map((y) => (
+                <option key={y} value={String(y)}>{y}</option>
+              ))}
+            </select>
             <div className="modal-buttons">
               <button className="btn-green" onClick={onAddFolder}>
                 Conferma
@@ -98,7 +98,7 @@ export default function HomePage({
                 onClick={() => {
                   onSetShowYearModal(false)
                   onSetYearInput('')
-                  onSetFolderNameInput('Manutenzioni')
+                  onSetFolderNameInput('')
                 }}
               >
                 Annulla

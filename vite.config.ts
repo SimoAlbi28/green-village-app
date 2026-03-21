@@ -8,6 +8,7 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     strictPort: true,
+    allowedHosts: ['subendocardial-figuratively-lincoln.ngrok-free.dev'],
     hmr: {
       host: 'localhost',
       port: 5173,

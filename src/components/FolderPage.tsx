@@ -65,7 +65,7 @@ export default function FolderPage({
   return (
     <div className="page-folder" ref={pageFolderRef}>
       <header id="tit1">
-        <div className="title-top">MANUTENZIONI</div>
+        <div className="title-top">{cartella.nome.toUpperCase()}</div>
         <div style={{ fontSize: '1.2rem', color: 'white', marginTop: '5px' }}>
           Anno: {cartella.anno}
         </div>
@@ -103,7 +103,7 @@ export default function FolderPage({
         <input
           id="search-input"
           type="text"
-          placeholder="Manutenzione..."
+          placeholder="Attività..."
           value={searchInput}
           onChange={(e) => onSetSearchInput(e.target.value)}
           autoComplete="off"
@@ -117,7 +117,7 @@ export default function FolderPage({
         </button>
       </div>
 
-      <h2>⚙️ Registro Manutenzioni ⚙️</h2>
+      <h2>⚙️ Registro Attività ⚙️</h2>
       <div id="manutenzioni-list" ref={manutenzioniListRef}>
         {manutenzioniFiltered.map(([id, data]) => (
           <ManutenzionCard

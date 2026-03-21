@@ -5,6 +5,7 @@ import type { Folders, Note } from './types'
 import HomePage from './components/HomePage'
 import FolderPage from './components/FolderPage'
 import Footer from './components/Footer'
+import { supabase } from './lib/supabase'
 
 // ===== UTILITY FUNCTIONS =====
 const formatData = (d: string): string => {
@@ -14,19 +15,13 @@ const formatData = (d: string): string => {
 
 // ===== APP COMPONENT =====
 export default function App() {
-  const [folders, setFolders] = useState<Folders>(() => {
-    if (typeof window === 'undefined') return {}
-    try {
-      return JSON.parse(localStorage.getItem('folders') || '{}')
-    } catch {
-      return {}
-    }
-  })
+  const [folders, setFolders] = useState<Folders>({})
+  const [loading, setLoading] = useState(true)
 
   const [page, setPage] = useState<'home' | 'folder'>('home')
   const [currentAnno, setCurrentAnno] = useState<string | null>(null)
   const [yearInput, setYearInput] = useState('')
-  const [folderNameInput, setFolderNameInput] = useState('Manutenzioni')
+  const [folderNameInput, setFolderNameInput] = useState('')
   const [searchInput, setSearchInput] = useState('')
   const [nomeInput, setNomeInput] = useState('')
   const [pendingQrId, setPendingQrId] = useState<string | null>(null)
@@ -44,10 +39,35 @@ export default function App() {
   const manutenzioniListRef = useRef<HTMLDivElement>(null)
   const pageFolderRef = useRef<HTMLDivElement>(null)
 
-  // Salva folders nel localStorage
+  // Carica folders da Supabase al mount
   useEffect(() => {
+    supabase
+      .from('app_data')
+      .select('value')
+      .eq('key', 'folders')
+      .single()
+      .then(({ data }) => {
+        if (data?.value && Object.keys(data.value).length > 0) {
+          setFolders(data.value)
+        } else {
+          try {
+            const local = JSON.parse(localStorage.getItem('folders') || '{}')
+            setFolders(local)
+          } catch {}
+        }
+        setLoading(false)
+      })
+  }, [])
+
+  // Salva folders su Supabase (e localStorage come cache)
+  useEffect(() => {
+    if (loading) return
     localStorage.setItem('folders', JSON.stringify(folders))
-  }, [folders])
+    supabase
+      .from('app_data')
+      .upsert({ key: 'folders', value: folders })
+      .then()
+  }, [folders, loading])
 
   // Resetta scroll della pagina quando si entra in una cartella
   useEffect(() => {
@@ -82,22 +102,18 @@ export default function App() {
       return
     }
     
-    if (!/^\d{4}$/.test(anno)) {
-      alert('Anno non valido. Usa 4 cifre, es: 2023')
+    if (Object.values(folders).some((f) => f.anno === anno && f.nome === nome)) {
+      alert('Esiste già una cartella con lo stesso anno e nome.')
       return
     }
 
-    if (folders.hasOwnProperty(anno)) {
-      alert('Esiste già una cartella con questo anno.')
-      return
-    }
-
+    const id = Date.now().toString()
     setFolders((prev) => ({
       ...prev,
-      [anno]: { nome, anno, manutenzioni: {} },
+      [id]: { nome, anno, manutenzioni: {} },
     }))
     setYearInput('')
-    setFolderNameInput('Manutenzioni')
+    setFolderNameInput('')
     setShowYearModal(false)
   }
 
@@ -112,10 +128,10 @@ export default function App() {
 
     if (
       Object.entries(folders).some(
-        ([key, f]) => f.nome === nuovoNome && key !== anno,
+        ([key, f]) => f.nome === nuovoNome && f.anno === folders[anno].anno && key !== anno,
       )
     ) {
-      alert('Nome già esistente.')
+      alert('Esiste già una cartella con lo stesso anno e nome.')
       return
     }
 
@@ -599,6 +615,7 @@ export default function App() {
   return (
     <div className="app-shell">
       {page === 'home' ? renderHome() : renderFolder()}
-      <Footer />    </div>
+      {page === 'home' && <Footer />}
+    </div>
   )
 }
