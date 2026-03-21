@@ -17,3 +17,11 @@ export type Cartella = {
 }
 
 export type Folders = Record<string, Cartella>
+
+export type UserProfile = {
+  id: string
+  nome: string
+  cognome: string
+  palazzina: string
+  telefono?: string
+}

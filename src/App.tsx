@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import { Html5Qrcode } from 'html5-qrcode'
-import type { Folders, Note } from './types'
+import type { Folders, Note, UserProfile } from './types'
 import HomePage from './components/HomePage'
 import FolderPage from './components/FolderPage'
 import Footer from './components/Footer'
 import { supabase } from './lib/supabase'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+import VerifyPage from './pages/VerifyPage'
 
 // ===== UTILITY FUNCTIONS =====
 const formatData = (d: string): string => {
@@ -17,6 +20,11 @@ const formatData = (d: string): string => {
 export default function App() {
   const [folders, setFolders] = useState<Folders>({})
   const [loading, setLoading] = useState(true)
+
+  // Auth state
+  const [authPage, setAuthPage] = useState<'login' | 'register' | 'verify'>('login')
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
 
   const [page, setPage] = useState<'home' | 'folder'>('home')
   const [currentAnno, setCurrentAnno] = useState<string | null>(null)
@@ -39,11 +47,59 @@ export default function App() {
   const manutenzioniListRef = useRef<HTMLDivElement>(null)
   const pageFolderRef = useRef<HTMLDivElement>(null)
 
-  // Carica folders da Supabase al mount
+  const [userEmail, setUserEmail] = useState('')
+
+  // Auth: controlla sessione al mount e ascolta cambiamenti
   useEffect(() => {
+    const loadProfile = async (userId: string) => {
+      const { data: authData } = await supabase.auth.getUser()
+      if (authData.user?.email) setUserEmail(authData.user.email)
+      const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
+      if (data) setProfile(data)
+      setAuthLoading(false)
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadProfile(session.user.id)
+      } else {
+        setAuthLoading(false)
+      }
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        loadProfile(session.user.id)
+      } else {
+        setProfile(null)
+        setFolders({})
+        setLoading(true)
+        setAuthLoading(false)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // Carica consiglieri della stessa palazzina
+  const [consiglieri, setConsiglieri] = useState<UserProfile[]>([])
+  useEffect(() => {
+    if (!profile) return
     supabase
-      .from('app_data')
+      .from('profiles')
+      .select('*')
+      .eq('palazzina', profile.palazzina)
+      .then(({ data }) => {
+        if (data) setConsiglieri(data)
+      })
+  }, [profile])
+
+  // Carica folders da Supabase quando il profilo è disponibile
+  useEffect(() => {
+    if (!profile) return
+    supabase
+      .from('building_data')
       .select('value')
+      .eq('palazzina', profile.palazzina)
       .eq('key', 'folders')
       .single()
       .then(({ data }) => {
@@ -51,23 +107,23 @@ export default function App() {
           setFolders(data.value)
         } else {
           try {
-            const local = JSON.parse(localStorage.getItem('folders') || '{}')
+            const local = JSON.parse(localStorage.getItem(`folders_${profile.palazzina}`) || '{}')
             setFolders(local)
           } catch {}
         }
         setLoading(false)
       })
-  }, [])
+  }, [profile])
 
   // Salva folders su Supabase (e localStorage come cache)
   useEffect(() => {
-    if (loading) return
-    localStorage.setItem('folders', JSON.stringify(folders))
+    if (loading || !profile) return
+    localStorage.setItem(`folders_${profile.palazzina}`, JSON.stringify(folders))
     supabase
-      .from('app_data')
-      .upsert({ key: 'folders', value: folders })
+      .from('building_data')
+      .upsert({ palazzina: profile.palazzina, key: 'folders', value: folders })
       .then()
-  }, [folders, loading])
+  }, [folders, loading, profile])
 
   // Resetta scroll della pagina quando si entra in una cartella
   useEffect(() => {
@@ -558,6 +614,9 @@ export default function App() {
         yearInput={yearInput}
         folderNameInput={folderNameInput}
         showYearModal={showYearModal}
+        profile={profile!}
+        userEmail={userEmail}
+        consiglieri={consiglieri}
         onAddFolder={aggiungiCartella}
         onSetYearInput={setYearInput}
         onSetFolderNameInput={setFolderNameInput}
@@ -566,6 +625,8 @@ export default function App() {
         onRenameFolder={rinominaCartella}
         onDeleteFolder={eliminaCartella}
         onCopyFolder={copiaTuttoCartella}
+        onLogout={handleLogout}
+        onUpdateProfile={handleUpdateProfile}
       />
     )
   }
@@ -612,10 +673,47 @@ export default function App() {
     )
   }
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    setProfile(null)
+    setFolders({})
+    setLoading(true)
+    setAuthPage('login')
+  }
+
+  const handleUpdateProfile = async (updates: { nome: string; cognome: string; telefono?: string; oldPassword?: string; newPassword?: string }): Promise<{ error?: string } | void> => {
+    if (!profile) return
+    if (updates.newPassword && updates.oldPassword) {
+      const { error: signInErr } = await supabase.auth.signInWithPassword({ email: userEmail, password: updates.oldPassword })
+      if (signInErr) return { error: 'Password attuale non corretta.' }
+      const { error: pwdErr } = await supabase.auth.updateUser({ password: updates.newPassword })
+      if (pwdErr) return { error: 'Errore nel cambio password: ' + pwdErr.message }
+    }
+    await supabase.from('profiles').update({
+      nome: updates.nome,
+      cognome: updates.cognome,
+      telefono: updates.telefono || null,
+    }).eq('id', profile.id)
+    setProfile(prev => prev ? { ...prev, nome: updates.nome, cognome: updates.cognome, telefono: updates.telefono } : null)
+  }
+
+  if (authLoading) {
+    return <div className="auth-loading">Caricamento...</div>
+  }
+
+  if (!profile) {
+    if (authPage === 'register') {
+      return <RegisterPage onGoToLogin={() => setAuthPage('login')} onGoToVerify={() => setAuthPage('verify')} />
+    }
+    if (authPage === 'verify') {
+      return <VerifyPage onGoToLogin={() => setAuthPage('login')} />
+    }
+    return <LoginPage onGoToRegister={() => setAuthPage('register')} onGoToVerify={() => setAuthPage('verify')} />
+  }
+
   return (
     <div className="app-shell">
       {page === 'home' ? renderHome() : renderFolder()}
-      {page === 'home' && <Footer />}
     </div>
   )
 }

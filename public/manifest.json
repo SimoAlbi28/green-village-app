@@ -1,45 +1,37 @@
 {
-  "name": "Manutenzioni App",
-  "short_name": "Manutenzioni",
-  "description": "App per la gestione delle manutenzioni con scansione QR code",
-  "start_url": "/progetto-finale/",
-  "scope": "/progetto-finale/",
+  "name": "Green Village App",
+  "short_name": "Green Village",
+  "description": "App per la gestione delle manutenzioni del Green Village",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#f0f4ff",
   "theme_color": "#000000",
   "icons": [
     {
-      "src": "/progetto-finale/icon-192.png",
+      "src": "/logo-green-village.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/progetto-finale/icon-512.png",
+      "src": "/logo-green-village.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/progetto-finale/icon-maskable-192.png",
+      "src": "/logo-green-village.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/progetto-finale/icon-maskable-512.png",
+      "src": "/logo-green-village.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/progetto-finale/screenshot-540.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
     }
   ]
 }
