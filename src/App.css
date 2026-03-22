@@ -355,7 +355,7 @@ body {
   padding: 15px;
   padding-left: max(15px, env(safe-area-inset-left));
   padding-right: max(15px, env(safe-area-inset-right));
-  padding-top: max(50px, calc(env(safe-area-inset-top) + 15px));
+  padding-top: calc(64px + env(safe-area-inset-top) + 20px);
   padding-bottom: max(15px, env(safe-area-inset-bottom));
   margin: 0 auto;
   max-width: 480px;
