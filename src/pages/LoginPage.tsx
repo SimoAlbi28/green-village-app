@@ -20,20 +20,33 @@ export default function LoginPage({ onGoToRegister, onGoToVerify }: LoginPagePro
     setLoading(true)
     setError('')
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password })
+      const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password })
       if (error) {
         if (error.message.toLowerCase().includes('email not confirmed')) {
-          setError('Email non ancora confermata. Contatta l\'amministratore.')
+          setError('Email non ancora confermata. Controlla la tua casella di posta e clicca il link di conferma.')
         } else if (error.message.toLowerCase().includes('invalid login credentials')) {
           setError('Credenziali non valide. Controlla email e password.')
         } else {
           setError('Errore: ' + error.message)
         }
+        setLoading(false)
+        return
       }
+      // Login riuscito: verifica che il profilo esista
+      if (data?.user) {
+        const { data: profileData } = await supabase.from('profiles').select('id').eq('id', data.user.id).single()
+        if (!profileData) {
+          setError('Profilo non trovato. Contatta l\'amministratore.')
+          await supabase.auth.signOut()
+          setLoading(false)
+          return
+        }
+      }
+      // Se tutto ok, il onAuthStateChange in App.tsx gestisce la navigazione
     } catch {
       setError('Errore di rete. Riprova.')
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
