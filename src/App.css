@@ -453,7 +453,7 @@ h1 {
   display: flex;
   justify-content: center;
   padding: 8px;
-  margin-top: 35px;
+  margin-top: 55px;
   margin-bottom: 30px;
 }
 
@@ -499,7 +499,7 @@ h1 {
   flex-direction: column;
   gap: 4px;
   margin-bottom: 30px;
-  margin-top: 55px;
+  margin-top: 75px;
 }
 
 .title-top {
