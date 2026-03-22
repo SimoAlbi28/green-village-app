@@ -63,6 +63,7 @@
 
 .auth-navbar {
   z-index: 300;
+  border-top: 2px solid #333;
 }
 
 .navbar-guest-icon {
@@ -130,7 +131,7 @@ body {
   padding: 15px;
   padding-left: max(15px, env(safe-area-inset-left));
   padding-right: max(15px, env(safe-area-inset-right));
-  padding-top: calc(64px + env(safe-area-inset-top) + 20px);
+  padding-top: calc(80px + env(safe-area-inset-top) + 20px);
   padding-bottom: max(20px, env(safe-area-inset-bottom));
   max-width: 480px;
   width: 100%;
@@ -356,7 +357,7 @@ body {
   padding: 15px;
   padding-left: max(15px, env(safe-area-inset-left));
   padding-right: max(15px, env(safe-area-inset-right));
-  padding-top: calc(64px + env(safe-area-inset-top) + 20px);
+  padding-top: calc(80px + env(safe-area-inset-top) + 20px);
   padding-bottom: max(15px, env(safe-area-inset-bottom));
   margin: 0 auto;
   max-width: 480px;
@@ -1265,7 +1266,7 @@ button {
   font-size: 16px;
   color: #444;
   text-align: center;
-  max-width: 320px;
+  max-width: 380px;
   line-height: 1.6;
   margin: 0;
   font-weight: 700;
@@ -1300,17 +1301,40 @@ button {
 
 .auth-welcome-badge {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 2px;
   background: rgba(255,255,255,0.7);
   border: 1px solid #c8e6c9;
-  border-radius: 24px;
-  padding: 8px 18px;
+  border-radius: 18px;
+  padding: 10px 22px 8px;
   font-size: 14px;
   font-weight: 700;
   color: #2d6a2d;
   letter-spacing: 0.5px;
-  margin: 16px 0 32px;
+  margin: 2px 0 20px;
+}
+
+.auth-badge-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin: 0;
+}
+
+.auth-badge-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-badge-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6a9a6a;
+  margin-top: 1px;
 }
 
 .auth-card {
@@ -1425,9 +1449,11 @@ button {
 
 .auth-divider-line {
   border: none;
-  border-top: 1px solid #000;
-  margin: 48px 0 32px;
-  width: 100%;
+  border-top: 2px solid #bbb;
+  border-image: linear-gradient(to right, transparent 5%, #bbb 30%, #bbb 70%, transparent 95%) 1;
+  margin: 4px 0 24px;
+  width: 80%;
+  align-self: center;
 }
 
 /* Logout bar above title */

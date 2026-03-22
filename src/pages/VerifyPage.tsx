@@ -6,7 +6,11 @@ interface VerifyPageProps {
 }
 
 export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
+  const hasSession = !!(sessionStorage.getItem('reg_email') && sessionStorage.getItem('reg_password'))
+
   const [code, setCode] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
@@ -17,11 +21,17 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
       return
     }
 
-    // Recupera email e password salvate durante la registrazione
-    const savedEmail = sessionStorage.getItem('reg_email')
-    const savedPassword = sessionStorage.getItem('reg_password')
-    if (!savedEmail || !savedPassword) {
-      setError('Sessione scaduta. Torna al login e registrati di nuovo.')
+    // Se non ha la sessione, servono email e password dal form
+    const useEmail = hasSession ? sessionStorage.getItem('reg_email')! : email.trim().toLowerCase()
+    const usePassword = hasSession ? sessionStorage.getItem('reg_password')! : password
+
+    if (!useEmail || !usePassword) {
+      setError('Inserisci email e password.')
+      return
+    }
+
+    if (!hasSession && usePassword.length < 6) {
+      setError('La password deve essere di almeno 6 caratteri.')
       return
     }
 
@@ -42,7 +52,14 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
       return
     }
 
-    // 2. Recupera nome/cognome dalla registrazione pendente usando l'email dal codice
+    // Verifica che l'email corrisponda a quella del codice invito
+    if (useEmail !== invite.email) {
+      setError('L\'email inserita non corrisponde al codice.')
+      setLoading(false)
+      return
+    }
+
+    // 2. Recupera nome/cognome dalla registrazione pendente
     const { data: pending } = await supabase
       .from('pending_registrations')
       .select('nome, cognome')
@@ -53,8 +70,8 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
 
     // 3. Crea l'utente in Supabase Auth
     const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
-      email: savedEmail,
-      password: savedPassword,
+      email: useEmail,
+      password: usePassword,
     })
 
     if (signUpErr || !signUpData.user) {
@@ -69,17 +86,17 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
       nome: pending?.nome || '',
       cognome: pending?.cognome || '',
       palazzina: invite.palazzina,
-      email: savedEmail,
+      email: useEmail,
     })
 
     // 5. Elimina il codice (monouso)
     await supabase.from('invite_codes').delete().eq('id', invite.id)
 
-    // 6. Aggiorna lo status della registrazione pendente e pulisci sessione
+    // 6. Aggiorna lo status della registrazione pendente
     await supabase
       .from('pending_registrations')
       .update({ status: 'approved' })
-      .eq('email', savedEmail)
+      .eq('email', useEmail)
     sessionStorage.removeItem('reg_email')
     sessionStorage.removeItem('reg_password')
 
@@ -90,10 +107,6 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
   if (success) {
     return (
       <div className="auth-page">
-        <p className="auth-tagline">
-        Resta aggiornato e condividi con i tuoi colleghi consiglieri manutenzioni, problemi e attività svolte nel condominio.<br />
-        <span>Insieme si migliora l'ambiente di vita.</span>
-      </p>
         <div className="auth-card">
           <h2 className="auth-card-title">Quasi fatto!</h2>
           <p className="auth-info">
@@ -110,13 +123,43 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
 
   return (
     <div className="auth-page">
-      <img src="/logo-green-village.png" alt="Green Village" className="auth-logo" />
+      <div className="auth-badge-label">Sede</div>
+      <div className="auth-welcome-badge">
+        <div className="auth-badge-main">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#5cb85c"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-8 2 8-2 12-6 12-6S17.5 4.5 17 8z"/></svg>
+          <span>Via Pietro Maroncelli</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#5cb85c"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-8 2 8-2 12-6 12-6S17.5 4.5 17 8z"/></svg>
+        </div>
+        <div className="auth-badge-sub">Trezzano sul Naviglio</div>
+      </div>
+      <hr className="auth-divider-line" />
       <div className="auth-card">
         <h2 className="auth-card-title">Completa registrazione</h2>
         <p className="auth-info">
-          Inserisci il codice ricevuto via email e scegli la tua password.
+          {hasSession
+            ? 'Inserisci il codice ricevuto via email.'
+            : 'Inserisci la tua email, scegli una password e inserisci il codice ricevuto.'}
         </p>
         {error && <p className="auth-error">{error}</p>}
+        {!hasSession && (
+          <>
+            <input
+              className="auth-input"
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <input
+              className="auth-input"
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+          </>
+        )}
         <input
           className="auth-input"
           type="text"
@@ -130,7 +173,7 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
         <button
           className="auth-btn-primary"
           onClick={handleVerify}
-          disabled={loading || !code.trim()}
+          disabled={loading || !code.trim() || (!hasSession && (!email.trim() || !password))}
           style={{ display: 'block', margin: '4px auto 0' }}
         >
           {loading ? 'Verifica in corso...' : 'Completa registrazione'}

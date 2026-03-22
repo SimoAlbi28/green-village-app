@@ -57,7 +57,16 @@ export default function RegisterPage({ onGoToLogin, onGoToVerify }: RegisterPage
   if (success) {
     return (
       <div className="auth-page">
-        <img src="/logo-green-village.png" alt="Green Village" className="auth-logo" />
+        <div className="auth-badge-label">Sede</div>
+        <div className="auth-welcome-badge">
+          <div className="auth-badge-main">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#5cb85c"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-8 2 8-2 12-6 12-6S17.5 4.5 17 8z"/></svg>
+            <span>Via Pietro Maroncelli</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#5cb85c"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-8 2 8-2 12-6 12-6S17.5 4.5 17 8z"/></svg>
+          </div>
+          <div className="auth-badge-sub">Trezzano sul Naviglio</div>
+        </div>
+        <hr className="auth-divider-line" />
         <div className="auth-card">
           <h2 className="auth-card-title">Richiesta inviata!</h2>
           <p className="auth-info">
@@ -78,10 +87,16 @@ export default function RegisterPage({ onGoToLogin, onGoToVerify }: RegisterPage
 
   return (
     <div className="auth-page">
-      <p className="auth-tagline">
-        Resta aggiornato e condividi con i tuoi colleghi consiglieri manutenzioni, problemi e attività svolte nel condominio.<br />
-        <span>Insieme si migliora l'ambiente di vita.</span>
-      </p>
+      <div className="auth-badge-label">Sede</div>
+      <div className="auth-welcome-badge">
+        <div className="auth-badge-main">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#5cb85c"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-8 2 8-2 12-6 12-6S17.5 4.5 17 8z"/></svg>
+          <span>Via Pietro Maroncelli</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#5cb85c"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-8 2 8-2 12-6 12-6S17.5 4.5 17 8z"/></svg>
+        </div>
+        <div className="auth-badge-sub">Trezzano sul Naviglio</div>
+      </div>
+      <hr className="auth-divider-line" />
       <div className="auth-card">
         <h2 className="auth-card-title">Registrazione</h2>
         <p className="auth-info">Verrai verificato prima di ricevere il codice di accesso.</p>
