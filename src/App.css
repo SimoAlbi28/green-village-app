@@ -6,6 +6,7 @@
 html {
   height: 100%;
   overflow: hidden;
+  scrollbar-gutter: stable;
 }
 
 /* ===== NAVBAR ===== */
@@ -152,7 +153,7 @@ body {
   height: 100%;
   color: #222;
   user-select: none;
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   display: flex;
