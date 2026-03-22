@@ -1262,20 +1262,20 @@ button {
 }
 
 .auth-tagline {
-  font-size: 14px;
+  font-size: 16px;
   color: #444;
   text-align: center;
-  max-width: 300px;
+  max-width: 320px;
   line-height: 1.6;
-  margin: 0 0 20px 0;
-  font-weight: 400;
+  margin: 0;
+  font-weight: 700;
 }
 
 .auth-tagline span {
   display: block;
   margin-top: 8px;
-  font-weight: 700;
-  font-size: 13px;
+  font-weight: 900;
+  font-size: 15px;
   background: linear-gradient(135deg, #2d6a2d, #5cb85c);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1288,6 +1288,29 @@ button {
   object-fit: contain;
   margin-bottom: 20px;
   border-radius: 24px;
+}
+
+.auth-logo-top {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+
+.auth-welcome-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid #c8e6c9;
+  border-radius: 24px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2d6a2d;
+  letter-spacing: 0.5px;
+  margin: 16px 0 32px;
 }
 
 .auth-card {
@@ -1398,6 +1421,13 @@ button {
   height: 1px;
   background: #eee;
   margin: 4px 0;
+}
+
+.auth-divider-line {
+  border: none;
+  border-top: 1px solid #000;
+  margin: 48px 0 32px;
+  width: 100%;
 }
 
 /* Logout bar above title */

@@ -36,10 +36,11 @@ export default function LoginPage({ onGoToRegister, onGoToVerify }: LoginPagePro
 
   return (
     <div className="auth-page">
-      <p className="auth-tagline">
-        Resta aggiornato e condividi con i tuoi colleghi consiglieri manutenzioni, problemi e attività svolte nel condominio.<br />
-        <span>Insieme si migliora l'ambiente di vita.</span>
-      </p>
+      <div className="auth-welcome-badge">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#5cb85c"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-8 2 8-2 12-6 12-6S17.5 4.5 17 8z"/></svg>
+        <span>Trezzano sul Naviglio</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#5cb85c"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-8 2 8-2 12-6 12-6S17.5 4.5 17 8z"/></svg>
+      </div>
       <div className="auth-card">
         <h2 className="auth-card-title">Accedi</h2>
         {error && <p className="auth-error">{error}</p>}
@@ -72,6 +73,11 @@ export default function LoginPage({ onGoToRegister, onGoToVerify }: LoginPagePro
           Ho il codice
         </button>
       </div>
+      <hr className="auth-divider-line" />
+      <p className="auth-tagline">
+        Resta aggiornato e condividi con i tuoi colleghi consiglieri manutenzioni, problemi e attività svolte nel condominio.<br />
+        <span>Insieme si migliora l'ambiente di vita.</span>
+      </p>
     </div>
   )
 }
