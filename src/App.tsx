@@ -57,14 +57,18 @@ export default function App() {
 
   // Auth: controlla sessione al mount e ascolta cambiamenti
   useEffect(() => {
-    const loadProfile = async (userId: string, isNewLogin = false) => {
+    const loadProfile = async (userId: string, isNewLogin = false, retries = 0) => {
       const { data: authData } = await supabase.auth.getUser()
       const email = authData.user?.email ?? ''
       if (email) setUserEmail(email)
       const { data, error: profileErr } = await supabase.from('profiles').select('*').eq('id', userId).single()
       if (profileErr || !data) {
+        // Il profilo potrebbe non essere ancora stato creato (durante registrazione)
+        if (retries < 5) {
+          setTimeout(() => loadProfile(userId, isNewLogin, retries + 1), 1000)
+          return
+        }
         console.error('Profilo non trovato:', profileErr?.message)
-        // Se il profilo non esiste, fai logout per evitare blocchi
         await supabase.auth.signOut()
         setProfile(null)
         setAuthLoading(false)

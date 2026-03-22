@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(KEY=\"sb_secret_35SWeJtlWg1T_gI7rRKDRw_24kOHYbg\" __NEW_LINE_cd284634db9f702d__ curl -s \"https://vbogndiocysnuhusuvle.supabase.co/auth/v1/admin/users\" -H \"apikey: $KEY\" -H \"Authorization: Bearer $KEY\")",
+      "Bash(python3 -c \":*)",
+      "Bash(KEY=\"sb_secret_35SWeJtlWg1T_gI7rRKDRw_24kOHYbg\")",
+      "Bash(URL=\"https://vbogndiocysnuhusuvle.supabase.co/rest/v1\")",
+      "Bash(ID=\"b9549ff3-2882-4679-a2a8-ae2f8a1ce053\")",
+      "Bash(__NEW_LINE_614eab266a77be7f__ curl:*)",
+      "Bash(curl -s -X DELETE \"$URL/manutenzioni?created_by=eq.$ID\" -H \"apikey: $KEY\" -H \"Authorization: Bearer $KEY\")",
+      "Bash(KEY=\"sb_secret_35SWeJtlWg1T_gI7rRKDRw_24kOHYbg\" URL=\"https://vbogndiocysnuhusuvle.supabase.co\" __NEW_LINE_809215b2268d959f__ curl -s \"$URL/auth/v1/admin/users\" -H \"apikey: $KEY\" -H \"Authorization: Bearer $KEY\")"
+    ]
+  }
+}

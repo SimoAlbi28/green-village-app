@@ -79,7 +79,10 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
       return
     }
 
-    // 4. Crea il profilo utente
+    // Blocca il login automatico del signUp
+    await supabase.auth.signOut()
+
+    // 4. Crea il profilo utente (ora senza interferenze)
     await supabase.from('profiles').insert({
       id: signUpData.user.id,
       nome: pending?.nome || '',
@@ -99,7 +102,7 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
     sessionStorage.removeItem('reg_email')
     sessionStorage.removeItem('reg_password')
 
-    // Fai login esplicito per assicurarsi che l'utente entri
+    // Ora fai login: il profilo esiste già nel DB
     await supabase.auth.signInWithPassword({
       email: useEmail,
       password: usePassword,
