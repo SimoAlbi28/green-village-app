@@ -100,6 +100,9 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
     sessionStorage.removeItem('reg_email')
     sessionStorage.removeItem('reg_password')
 
+    // Fai logout per evitare l'accesso automatico dopo il signUp
+    await supabase.auth.signOut()
+
     setSuccess(true)
     setLoading(false)
   }
@@ -107,13 +110,19 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
   if (success) {
     return (
       <div className="auth-page">
+        <div className="auth-badge-label">Sede</div>
+        <div className="auth-welcome-badge">
+          <div className="auth-badge-main">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#5cb85c"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-8 2 8-2 12-6 12-6S17.5 4.5 17 8z"/></svg>
+            <span>Via Pietro Maroncelli</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#5cb85c"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-8 2 8-2 12-6 12-6S17.5 4.5 17 8z"/></svg>
+          </div>
+          <div className="auth-badge-sub">Trezzano sul Naviglio</div>
+        </div>
+        <hr className="auth-divider-line" />
         <div className="auth-card">
-          <h2 className="auth-card-title">Quasi fatto!</h2>
-          <p className="auth-info">
-            Account creato con successo. Controlla la tua email: ti abbiamo inviato un link di conferma.
-            Dopo aver cliccato il link, potrai accedere con email e password.
-          </p>
-          <button className="auth-btn-primary" onClick={onGoToLogin}>
+          <h2 className="auth-card-title">Account creato con successo!</h2>
+          <button className="auth-btn-primary" onClick={onGoToLogin} style={{ display: 'block', margin: '16px auto 0' }}>
             Vai al login
           </button>
         </div>

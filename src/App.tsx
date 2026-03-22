@@ -21,7 +21,7 @@ const formatData = (d: string): string => {
 // ===== APP COMPONENT =====
 export default function App() {
   const [folders, setFolders] = useState<Folders>({})
-  const [loading, setLoading] = useState(true)
+  const [, setLoading] = useState(true)
 
   // Auth state
   const [authPage, setAuthPage] = useState<'login' | 'register' | 'verify'>('login')
@@ -111,70 +111,80 @@ export default function App() {
       })
   }, [profile])
 
-  // Ref per evitare loop: ignora aggiornamenti realtime se il salvataggio è locale
-  const skipRealtimeRef = useRef(false)
+  // Carica folders dalle tabelle separate e ricostruisce la struttura Folders
+  const loadFolders = async (palazzina: string) => {
+    const { data: cartelleData } = await supabase
+      .from('cartelle')
+      .select('*')
+      .eq('palazzina', palazzina)
 
-  // Carica folders da Supabase quando il profilo è disponibile
+    if (!cartelleData) { setLoading(false); return }
+
+    const cartellaIds = cartelleData.map(c => c.id)
+
+    let manutenzioniData: any[] = []
+    let noteData: any[] = []
+
+    if (cartellaIds.length > 0) {
+      const { data: mData } = await supabase
+        .from('manutenzioni')
+        .select('*')
+        .in('cartella_id', cartellaIds)
+      manutenzioniData = mData || []
+
+      const manutenzioneIds = manutenzioniData.map(m => m.id)
+      if (manutenzioneIds.length > 0) {
+        const { data: nData } = await supabase
+          .from('note')
+          .select('*')
+          .in('manutenzione_id', manutenzioneIds)
+        noteData = nData || []
+      }
+    }
+
+    // Ricostruisci la struttura Folders
+    const newFolders: Folders = {}
+    for (const c of cartelleData) {
+      const manuts: Record<string, any> = {}
+      for (const m of manutenzioniData.filter(m => m.cartella_id === c.id)) {
+        const notePerM = noteData
+          .filter(n => n.manutenzione_id === m.id)
+          .map(n => ({ data: n.data, desc: n.descrizione }))
+        manuts[m.id] = {
+          nome: m.nome,
+          note: notePerM,
+          expanded: false,
+          qrId: m.qr_id || undefined,
+        }
+      }
+      newFolders[c.id] = { nome: c.nome, anno: c.anno, manutenzioni: manuts }
+    }
+    setFolders(newFolders)
+    setLoading(false)
+  }
+
   useEffect(() => {
     if (!profile) return
-    supabase
-      .from('building_data')
-      .select('value')
-      .eq('palazzina', profile.palazzina)
-      .eq('key', 'folders')
-      .single()
-      .then(({ data }) => {
-        if (data?.value && Object.keys(data.value).length > 0) {
-          setFolders(data.value)
-        } else {
-          try {
-            const local = JSON.parse(localStorage.getItem(`folders_${profile.palazzina}`) || '{}')
-            setFolders(local)
-          } catch {}
-        }
-        setLoading(false)
-      })
+    loadFolders(profile.palazzina)
 
-    // Realtime: ascolta modifiche da altri consiglieri della stessa palazzina
+    // Realtime: ascolta modifiche su tutte e 3 le tabelle
     const channel = supabase
-      .channel(`building_data_${profile.palazzina}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'building_data',
-          filter: `palazzina=eq.${profile.palazzina}`,
-        },
-        (payload) => {
-          if (skipRealtimeRef.current) {
-            skipRealtimeRef.current = false
-            return
-          }
-          const newData = (payload.new as { key?: string; value?: Folders })
-          if (newData?.key === 'folders' && newData?.value) {
-            setFolders(newData.value)
-            localStorage.setItem(`folders_${profile.palazzina}`, JSON.stringify(newData.value))
-          }
-        }
-      )
+      .channel(`realtime_${profile.palazzina}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cartelle' }, () => {
+        loadFolders(profile.palazzina)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'manutenzioni' }, () => {
+        loadFolders(profile.palazzina)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'note' }, () => {
+        loadFolders(profile.palazzina)
+      })
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
   }, [profile])
-
-  // Salva folders su Supabase (e localStorage come cache)
-  useEffect(() => {
-    if (loading || !profile) return
-    localStorage.setItem(`folders_${profile.palazzina}`, JSON.stringify(folders))
-    skipRealtimeRef.current = true
-    supabase
-      .from('building_data')
-      .upsert({ palazzina: profile.palazzina, key: 'folders', value: folders })
-      .then()
-  }, [folders, loading, profile])
 
   // Scroll in cima ad ogni cambio pagina
   useEffect(() => {
@@ -195,21 +205,31 @@ export default function App() {
   }, [showNomeModal])
 
   // ===== HOME FUNCTIONS =====
-  const aggiungiCartella = () => {
+  const aggiungiCartella = async () => {
     const anno = yearInput.trim()
     const nome = folderNameInput.trim()
-    
+
     if (!nome) {
       alert('Inserisci un nome valido.')
       return
     }
-    
+
     if (Object.values(folders).some((f) => f.anno === anno && f.nome === nome)) {
       alert('Esiste già una cartella con lo stesso anno e nome.')
       return
     }
 
+    if (!profile) return
     const id = Date.now().toString()
+    const { error } = await supabase.from('cartelle').insert({
+      id,
+      palazzina: profile.palazzina,
+      nome,
+      anno,
+      created_by: profile.id,
+    })
+    if (error) { alert('Errore nel salvataggio.'); return }
+
     setFolders((prev) => ({
       ...prev,
       [id]: { nome, anno, manutenzioni: {} },
@@ -219,7 +239,7 @@ export default function App() {
     setShowYearModal(false)
   }
 
-  const rinominaCartella = (anno: string) => {
+  const rinominaCartella = async (anno: string) => {
     const nuovoNome = prompt('Nuovo nome cartella:', folders[anno].nome)?.trim()
     if (!nuovoNome) return
 
@@ -237,16 +257,18 @@ export default function App() {
       return
     }
 
+    await supabase.from('cartelle').update({ nome: nuovoNome }).eq('id', anno)
     setFolders((prev) => ({
       ...prev,
       [anno]: { ...prev[anno], nome: nuovoNome },
     }))
   }
 
-  const eliminaCartella = (anno: string) => {
+  const eliminaCartella = async (anno: string) => {
     if (
       confirm(`Sei sicuro di eliminare la cartella "${folders[anno].nome}"?`)
     ) {
+      await supabase.from('cartelle').delete().eq('id', anno)
       setFolders((prev) => {
         const newFolders = { ...prev }
         delete newFolders[anno]
@@ -324,8 +346,8 @@ export default function App() {
     setScannerActive(false)
   }
 
-  const aggiungiManutenzione = () => {
-    if (!currentAnno) return
+  const aggiungiManutenzione = async () => {
+    if (!currentAnno || !profile) return
     const nome = nomeInput.trim().toUpperCase()
     if (!nome) {
       alert('Inserisci un nome valido.')
@@ -339,6 +361,15 @@ export default function App() {
     }
 
     const id = Date.now().toString()
+    const { error } = await supabase.from('manutenzioni').insert({
+      id,
+      cartella_id: currentAnno,
+      nome,
+      qr_id: pendingQrId || null,
+      created_by: profile.id,
+    })
+    if (error) { alert('Errore nel salvataggio.'); return }
+
     setFolders((prev) => ({
       ...prev,
       [currentAnno]: {
@@ -354,7 +385,7 @@ export default function App() {
     setShowNomeModal(false)
   }
 
-  const rinominaManutenzione = (id: string) => {
+  const rinominaManutenzione = async (id: string) => {
     if (!currentAnno) return
     const manutenzione = folders[currentAnno].manutenzioni[id]
     const nuovoNome = prompt('Nuovo nome:', manutenzione.nome)?.trim().toUpperCase()
@@ -369,10 +400,11 @@ export default function App() {
       (m) => m.nome === nuovoNome && m !== manutenzione,
     )
     if (esisteGia) {
-      alert('⚠️ Nome già esistente.')
+      alert('Nome già esistente.')
       return
     }
 
+    await supabase.from('manutenzioni').update({ nome: nuovoNome }).eq('id', id)
     setFolders((prev) => ({
       ...prev,
       [currentAnno]: {
@@ -385,10 +417,11 @@ export default function App() {
     }))
   }
 
-  const eliminaManutenzione = (id: string) => {
+  const eliminaManutenzione = async (id: string) => {
     if (!currentAnno) return
     const nome = folders[currentAnno].manutenzioni[id].nome
     if (confirm(`Sei sicuro di voler eliminare "${nome}"?`)) {
+      await supabase.from('manutenzioni').delete().eq('id', id)
       setFolders((prev) => ({
         ...prev,
         [currentAnno]: {
@@ -420,8 +453,8 @@ export default function App() {
     }))
   }
 
-  const aggiungiNota = (id: string, data: string, desc: string) => {
-    if (!currentAnno) return
+  const aggiungiNota = async (id: string, data: string, desc: string) => {
+    if (!currentAnno || !profile) return
     if (!data) {
       alert('Inserisci una data valida.')
       return
@@ -429,6 +462,25 @@ export default function App() {
     if (!desc.trim()) {
       alert('Inserisci una descrizione.')
       return
+    }
+
+    if (noteInModifica && noteInModifica.manutenzioneId === id) {
+      // Modifica nota esistente: recupera l'id della nota dal DB
+      const { data: noteDb } = await supabase
+        .from('note')
+        .select('id')
+        .eq('manutenzione_id', id)
+      if (noteDb && noteDb[noteInModifica.noteIndex]) {
+        await supabase.from('note').update({ data, descrizione: desc }).eq('id', noteDb[noteInModifica.noteIndex].id)
+      }
+    } else {
+      // Nuova nota
+      await supabase.from('note').insert({
+        manutenzione_id: id,
+        data,
+        descrizione: desc,
+        created_by: profile.id,
+      })
     }
 
     setFolders((prev) => ({
@@ -455,9 +507,18 @@ export default function App() {
     setNoteInModifica(null)
   }
 
-  const eliminaNota = (id: string, index: number) => {
+  const eliminaNota = async (id: string, index: number) => {
     if (!currentAnno) return
     if (confirm('Sei sicuro di voler eliminare questa nota?')) {
+      // Recupera l'id della nota dal DB
+      const { data: noteDb } = await supabase
+        .from('note')
+        .select('id')
+        .eq('manutenzione_id', id)
+      if (noteDb && noteDb[index]) {
+        await supabase.from('note').delete().eq('id', noteDb[index].id)
+      }
+
       setFolders((prev) => ({
         ...prev,
         [currentAnno]: {
@@ -625,6 +686,8 @@ export default function App() {
 
     if (byName) {
       const [idMatch] = byName
+      // Auto-collega il QR scansionato nel DB
+      supabase.from('manutenzioni').update({ qr_id: raw }).eq('id', idMatch).then()
       setFolders((prev) => ({
         ...prev,
         [currentAnno]: {
@@ -635,7 +698,7 @@ export default function App() {
               {
                 ...manut,
                 expanded: id === idMatch,
-                qrId: id === idMatch ? raw : manut.qrId, // auto-collega il QR scansionato
+                qrId: id === idMatch ? raw : manut.qrId,
               },
             ]),
           ),

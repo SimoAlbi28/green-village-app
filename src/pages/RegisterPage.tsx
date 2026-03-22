@@ -77,7 +77,7 @@ export default function RegisterPage({ onGoToLogin, onGoToVerify }: RegisterPage
             Ho ricevuto il codice
           </button>
           <div className="auth-divider" />
-          <button className="auth-btn-link" onClick={onGoToLogin}>
+          <button className="auth-btn-link" onClick={() => { sessionStorage.removeItem('reg_email'); sessionStorage.removeItem('reg_password'); onGoToLogin(); }}>
             Torna al login
           </button>
         </div>
@@ -108,7 +108,7 @@ export default function RegisterPage({ onGoToLogin, onGoToVerify }: RegisterPage
         <input className="auth-input" type="password" placeholder="Conferma password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" />
         <label className="auth-label">Palazzina di appartenenza</label>
         <select className="auth-input" value={palazzina} onChange={(e) => setPalazzina(e.target.value)}>
-          {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map((p) => (
+          {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'].map((p) => (
             <option key={p} value={p}>Palazzina {p}</option>
           ))}
         </select>
