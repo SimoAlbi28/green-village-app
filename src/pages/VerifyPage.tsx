@@ -1,12 +1,16 @@
-import { useState } from 'react'
+import { useState, useRef, type MutableRefObject } from 'react'
 import { supabase } from '../lib/supabase'
 
 interface VerifyPageProps {
   onGoToLogin: () => void
+  isRegisteringRef: MutableRefObject<boolean>
 }
 
-export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
-  const hasSession = !!(sessionStorage.getItem('reg_email') && sessionStorage.getItem('reg_password'))
+export default function VerifyPage({ onGoToLogin, isRegisteringRef }: VerifyPageProps) {
+  // Calcola hasSession una sola volta e salvalo in un ref
+  const hasSessionRef = useRef(!!(sessionStorage.getItem('reg_email') && sessionStorage.getItem('reg_password')))
+  const savedEmailRef = useRef(sessionStorage.getItem('reg_email') || '')
+  const savedPasswordRef = useRef(sessionStorage.getItem('reg_password') || '')
 
   const [code, setCode] = useState('')
   const [email, setEmail] = useState('')
@@ -20,16 +24,15 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
       return
     }
 
-    // Se non ha la sessione, servono email e password dal form
-    const useEmail = hasSession ? sessionStorage.getItem('reg_email')! : email.trim().toLowerCase()
-    const usePassword = hasSession ? sessionStorage.getItem('reg_password')! : password
+    const useEmail = hasSessionRef.current ? savedEmailRef.current : email.trim().toLowerCase()
+    const usePassword = hasSessionRef.current ? savedPasswordRef.current : password
 
     if (!useEmail || !usePassword) {
       setError('Inserisci email e password.')
       return
     }
 
-    if (!hasSession && usePassword.length < 6) {
+    if (!hasSessionRef.current && usePassword.length < 6) {
       setError('La password deve essere di almeno 6 caratteri.')
       return
     }
@@ -37,74 +40,91 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
     setLoading(true)
     setError('')
 
-    // 1. Verifica il codice invito
-    const { data: invite, error: inviteErr } = await supabase
-      .from('invite_codes')
-      .select('*')
-      .eq('code', code.trim())
-      .gte('expires_at', new Date().toISOString())
-      .single()
+    // Blocca gli auth state change durante tutta la registrazione
+    isRegisteringRef.current = true
 
-    if (inviteErr || !invite) {
-      setError('Codice non valido, già utilizzato o scaduto.')
-      setLoading(false)
-      return
+    try {
+      // 1. Verifica il codice invito
+      const { data: invite, error: inviteErr } = await supabase
+        .from('invite_codes')
+        .select('*')
+        .eq('code', code.trim())
+        .gte('expires_at', new Date().toISOString())
+        .single()
+
+      if (inviteErr || !invite) {
+        setError('Codice non valido, già utilizzato o scaduto.')
+        setLoading(false)
+        isRegisteringRef.current = false
+        return
+      }
+
+      // Verifica che l'email corrisponda a quella del codice invito
+      if (useEmail !== invite.email) {
+        setError('L\'email inserita non corrisponde al codice.')
+        setLoading(false)
+        isRegisteringRef.current = false
+        return
+      }
+
+      // 2. Recupera nome/cognome dalla registrazione pendente
+      const { data: pending } = await supabase
+        .from('pending_registrations')
+        .select('nome, cognome')
+        .eq('email', invite.email)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      // 3. Elimina il codice invito
+      await supabase.from('invite_codes').delete().eq('id', invite.id)
+
+      // 4. Aggiorna lo status della registrazione pendente
+      await supabase
+        .from('pending_registrations')
+        .update({ status: 'approved' })
+        .eq('email', useEmail)
+
+      // 5. Crea l'utente in Supabase Auth
+      const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+        email: useEmail,
+        password: usePassword,
+      })
+
+      if (signUpErr || !signUpData.user) {
+        setError("Errore nella creazione dell'account: " + (signUpErr?.message || 'Riprova.'))
+        setLoading(false)
+        isRegisteringRef.current = false
+        return
+      }
+
+      // 6. Crea il profilo utente
+      await supabase.from('profiles').insert({
+        id: signUpData.user.id,
+        nome: pending?.nome || '',
+        cognome: pending?.cognome || '',
+        palazzina: invite.palazzina,
+        email: useEmail,
+      })
+
+      // 7. Pulisci sessione
+      sessionStorage.removeItem('reg_email')
+      sessionStorage.removeItem('reg_password')
+
+      // 8. Sblocca gli auth state change e forza il login
+      isRegisteringRef.current = false
+
+      // Il signUp potrebbe aver già fatto il login, forziamo un signIn per sicurezza
+      await supabase.auth.signInWithPassword({
+        email: useEmail,
+        password: usePassword,
+      })
+
+    } catch (err) {
+      setError('Errore durante la registrazione. Riprova.')
+      isRegisteringRef.current = false
     }
 
-    // Verifica che l'email corrisponda a quella del codice invito
-    if (useEmail !== invite.email) {
-      setError('L\'email inserita non corrisponde al codice.')
-      setLoading(false)
-      return
-    }
-
-    // 2. Recupera nome/cognome dalla registrazione pendente
-    const { data: pending } = await supabase
-      .from('pending_registrations')
-      .select('nome, cognome')
-      .eq('email', invite.email)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-
-    // 3. Prima prepara tutto nel DB (prima del signUp per evitare race condition)
-    // Crea un ID temporaneo che verrà usato dopo il signUp
-
-    // 4. Elimina il codice (monouso) - fallo prima del signUp
-    await supabase.from('invite_codes').delete().eq('id', invite.id)
-
-    // 5. Aggiorna lo status della registrazione pendente
-    await supabase
-      .from('pending_registrations')
-      .update({ status: 'approved' })
-      .eq('email', useEmail)
-
-    // 6. Crea l'utente in Supabase Auth
-    const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
-      email: useEmail,
-      password: usePassword,
-    })
-
-    if (signUpErr || !signUpData.user) {
-      setError("Errore nella creazione dell'account: " + (signUpErr?.message || 'Riprova.'))
-      setLoading(false)
-      return
-    }
-
-    // 7. Crea SUBITO il profilo utente (prima che loadProfile lo cerchi)
-    await supabase.from('profiles').insert({
-      id: signUpData.user.id,
-      nome: pending?.nome || '',
-      cognome: pending?.cognome || '',
-      palazzina: invite.palazzina,
-      email: useEmail,
-    })
-
-    sessionStorage.removeItem('reg_email')
-    sessionStorage.removeItem('reg_password')
-
-    // Il signUp ha già fatto il login automatico.
-    // loadProfile in App.tsx ha il retry, quindi troverà il profilo.
     setLoading(false)
   }
 
@@ -123,12 +143,12 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
       <div className="auth-card">
         <h2 className="auth-card-title">Completa registrazione</h2>
         <p className="auth-info">
-          {hasSession
+          {hasSessionRef.current
             ? 'Inserisci il codice ricevuto via email.'
             : 'Inserisci la tua email, scegli una password e inserisci il codice ricevuto.'}
         </p>
         {error && <p className="auth-error">{error}</p>}
-        {!hasSession && (
+        {!hasSessionRef.current && (
           <>
             <input
               className="auth-input"
@@ -161,7 +181,7 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
         <button
           className="auth-btn-primary"
           onClick={handleVerify}
-          disabled={loading || !code.trim() || (!hasSession && (!email.trim() || !password))}
+          disabled={loading || !code.trim() || (!hasSessionRef.current && (!email.trim() || !password))}
           style={{ display: 'block', margin: '4px auto 0' }}
         >
           {loading ? 'Verifica in corso...' : 'Completa registrazione'}

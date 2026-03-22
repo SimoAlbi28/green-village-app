@@ -27,6 +27,7 @@ export default function App() {
   const [authPage, setAuthPage] = useState<'login' | 'register' | 'verify'>('login')
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const isRegisteringRef = useRef(false)
 
   const [page, setPage] = useState<'home' | 'folder'>('home')
   const [currentAnno, setCurrentAnno] = useState<string | null>(null)
@@ -95,6 +96,8 @@ export default function App() {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Ignora gli auth change durante la registrazione
+      if (isRegisteringRef.current) return
       if (session?.user) {
         loadProfile(session.user.id, event === 'SIGNED_IN')
       } else {
@@ -842,7 +845,7 @@ export default function App() {
       <>
         <AuthNavbar />
         {authPage === 'register' && <RegisterPage onGoToLogin={() => setAuthPage('login')} onGoToVerify={() => setAuthPage('verify')} />}
-        {authPage === 'verify' && <VerifyPage onGoToLogin={() => setAuthPage('login')} />}
+        {authPage === 'verify' && <VerifyPage onGoToLogin={() => setAuthPage('login')} isRegisteringRef={isRegisteringRef} />}
         {authPage === 'login' && <LoginPage onGoToRegister={() => setAuthPage('register')} onGoToVerify={() => setAuthPage('verify')} />}
       </>
     )
