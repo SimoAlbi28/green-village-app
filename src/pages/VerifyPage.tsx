@@ -90,7 +90,10 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
   if (success) {
     return (
       <div className="auth-page">
-        <img src="/logo-green-village.png" alt="Green Village" className="auth-logo" />
+        <p className="auth-tagline">
+        Resta aggiornato e condividi con i tuoi colleghi consiglieri manutenzioni, problemi e attività svolte nel condominio.<br />
+        <span>Insieme si migliora l'ambiente di vita.</span>
+      </p>
         <div className="auth-card">
           <h2 className="auth-card-title">Quasi fatto!</h2>
           <p className="auth-info">

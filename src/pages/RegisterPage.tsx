@@ -78,7 +78,10 @@ export default function RegisterPage({ onGoToLogin, onGoToVerify }: RegisterPage
 
   return (
     <div className="auth-page">
-      <h1 className="auth-title">GREEN VILLAGE APP</h1>
+      <p className="auth-tagline">
+        Resta aggiornato e condividi con i tuoi colleghi consiglieri manutenzioni, problemi e attività svolte nel condominio.<br />
+        <span>Insieme si migliora l'ambiente di vita.</span>
+      </p>
       <div className="auth-card">
         <h2 className="auth-card-title">Registrazione</h2>
         <p className="auth-info">Verrai verificato prima di ricevere il codice di accesso.</p>

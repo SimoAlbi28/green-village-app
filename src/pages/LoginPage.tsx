@@ -36,7 +36,10 @@ export default function LoginPage({ onGoToRegister, onGoToVerify }: LoginPagePro
 
   return (
     <div className="auth-page">
-      <img src="/logo-green-village.png" alt="Green Village" className="auth-logo" />
+      <p className="auth-tagline">
+        Resta aggiornato e condividi con i tuoi colleghi consiglieri manutenzioni, problemi e attività svolte nel condominio.<br />
+        <span>Insieme si migliora l'ambiente di vita.</span>
+      </p>
       <div className="auth-card">
         <h2 className="auth-card-title">Accedi</h2>
         {error && <p className="auth-error">{error}</p>}

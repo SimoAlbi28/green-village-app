@@ -42,7 +42,7 @@ export default function HomePage({
 
   return (
     <div className="page-home">
-      <Header title={`GREEN VILLAGE PALAZZINA ${profile.palazzina}`} />
+      <Header titleTop="GREEN VILLAGE" titleBottom={`PALAZZINA ${profile.palazzina}`} />
 
       <div className="home-topbar">
         <button id="btn-add-folder" onClick={() => { onSetYearInput(String(currentYear)); onSetShowYearModal(true) }}>

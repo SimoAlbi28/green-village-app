@@ -9,16 +9,16 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 64px;
   background: #fff;
-  border-bottom: 2px solid #000;
+  border-bottom: 1px solid #000;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
   padding-left: max(16px, env(safe-area-inset-left));
   padding-right: max(16px, env(safe-area-inset-right));
-  padding-top: env(safe-area-inset-top);
+  padding-top: calc(env(safe-area-inset-top) + 6px);
+  padding-bottom: 6px;
+  min-height: calc(64px + env(safe-area-inset-top));
   z-index: 200;
   box-sizing: border-box;
 }
@@ -47,6 +47,33 @@
   align-items: center;
   pointer-events: none;
   gap: 1px;
+}
+
+.navbar-title--gold {
+  background: linear-gradient(135deg, #b8860b 0%, #f5d06a 50%, #b8860b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.navbar-title--gold::after {
+  background: linear-gradient(90deg, #b8860b, #f5d06a);
+}
+
+.auth-navbar {
+  z-index: 300;
+}
+
+.navbar-guest-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #fff;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #000;
 }
 
 .navbar-username {
@@ -97,13 +124,13 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #f0f4ff;
+  background: #edf7ee;
   margin: 0;
   padding: 15px;
   padding-left: max(15px, env(safe-area-inset-left));
   padding-right: max(15px, env(safe-area-inset-right));
-  padding-top: calc(64px + env(safe-area-inset-top) + 16px);
-  padding-bottom: max(15px, env(safe-area-inset-bottom));
+  padding-top: calc(64px + env(safe-area-inset-top) + 20px);
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
   max-width: 480px;
   width: 100%;
   margin-left: auto;
@@ -333,7 +360,7 @@ body {
   margin: 0 auto;
   max-width: 480px;
   width: 100%;
-  background: #e6e6e6;
+  background: #edf7ee;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -354,7 +381,6 @@ body {
 }
 
 #header h1 {
-  color: white;
   background-color: black;
   border-radius: 10px;
   padding: 16px;
@@ -362,13 +388,26 @@ body {
   user-select: none;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   font-weight: 700;
   font-size: 26px;
   text-transform: uppercase;
   letter-spacing: 4px;
   text-align: center;
   margin: 0;
+  line-height: 1.25;
+}
+
+.header-title-gold {
+  background: linear-gradient(135deg, #b8860b 0%, #f5d06a 50%, #b8860b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-title-white {
+  color: white;
+  -webkit-text-fill-color: white;
 }
 
 #tit1 {
@@ -836,6 +875,8 @@ h2 {
   align-items: center;
   z-index: 9999;
   box-sizing: border-box;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .modal.hidden {
@@ -1083,6 +1124,93 @@ button {
   }
 }
 
+/* ===== WELCOME SCREEN ===== */
+.welcome-screen {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8f5e9 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 999;
+  animation: welcomeFadeIn 0.4s ease;
+}
+
+@keyframes welcomeFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.welcome-card {
+  background: white;
+  border-radius: 24px;
+  padding: 40px 32px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  max-width: 320px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.welcome-check {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #43a047, #2d6a2d);
+  color: white;
+  font-size: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 16px rgba(46,125,50,0.3);
+  animation: checkPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s both;
+}
+
+@keyframes checkPop {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.welcome-sub {
+  font-size: 13px;
+  color: #4caf50;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.welcome-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin: 4px 0 0 0;
+  letter-spacing: 0.3px;
+}
+
+.welcome-palazzina {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+  font-weight: 500;
+}
+
+.welcome-name {
+  font-size: 22px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #2d6a2d, #5cb85c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
 /* ===== AUTH PAGES ===== */
 .auth-loading {
   display: flex;
@@ -1100,9 +1228,13 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   background: #f0f4ff;
   padding: 20px;
+  padding-top: calc(64px + env(safe-area-inset-top) + 20px);
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  padding-left: max(20px, env(safe-area-inset-left));
+  padding-right: max(20px, env(safe-area-inset-right));
   box-sizing: border-box;
   overflow-y: auto;
 }
@@ -1120,6 +1252,27 @@ button {
   width: 100%;
   max-width: 400px;
   box-sizing: border-box;
+}
+
+.auth-tagline {
+  font-size: 14px;
+  color: #444;
+  text-align: center;
+  max-width: 300px;
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+  font-weight: 400;
+}
+
+.auth-tagline span {
+  display: block;
+  margin-top: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  background: linear-gradient(135deg, #2d6a2d, #5cb85c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .auth-logo {
@@ -1483,12 +1636,20 @@ button {
   padding-bottom: 8px;
 }
 
+.consiglieri-count {
+  text-align: center;
+  font-size: 11px;
+  color: #888;
+  margin: 0 0 12px 0;
+  font-weight: 500;
+}
+
 .consiglieri-title {
   text-align: center;
   font-size: 16px;
   font-weight: 700;
   color: #1a3a6b;
-  margin: 0 0 14px 0;
+  margin: 0 0 2px 0;
 }
 
 .consiglieri-list {

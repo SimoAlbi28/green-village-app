@@ -5,6 +5,7 @@ import type { Folders, Note, UserProfile } from './types'
 import HomePage from './components/HomePage'
 import FolderPage from './components/FolderPage'
 import Navbar from './components/Navbar'
+import AuthNavbar from './components/AuthNavbar'
 import ProfileModal from './components/ProfileModal'
 import { supabase } from './lib/supabase'
 import LoginPage from './pages/LoginPage'
@@ -50,19 +51,27 @@ export default function App() {
 
   const [userEmail, setUserEmail] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
+  const [showWelcome, setShowWelcome] = useState(false)
+  const [welcomeProfile, setWelcomeProfile] = useState<UserProfile | null>(null)
+  const welcomeShownRef = useRef(false)
 
   // Auth: controlla sessione al mount e ascolta cambiamenti
   useEffect(() => {
-    const loadProfile = async (userId: string) => {
+    const loadProfile = async (userId: string, isNewLogin = false) => {
       const { data: authData } = await supabase.auth.getUser()
       const email = authData.user?.email ?? ''
       if (email) setUserEmail(email)
       const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
       if (data) {
         setProfile(data)
-        // Sincronizza email nel profilo se mancante
         if (email && !data.email) {
           supabase.from('profiles').update({ email }).eq('id', userId).then()
+        }
+        if (isNewLogin && !welcomeShownRef.current) {
+          welcomeShownRef.current = true
+          setWelcomeProfile(data)
+          setShowWelcome(true)
+          setTimeout(() => setShowWelcome(false), 4000)
         }
       }
       setAuthLoading(false)
@@ -70,15 +79,15 @@ export default function App() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        loadProfile(session.user.id)
+        loadProfile(session.user.id, false)
       } else {
         setAuthLoading(false)
       }
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
-        loadProfile(session.user.id)
+        loadProfile(session.user.id, event === 'SIGNED_IN')
       } else {
         setProfile(null)
         setFolders({})
@@ -678,6 +687,7 @@ export default function App() {
     setFolders({})
     setLoading(true)
     setProfileOpen(false)
+    welcomeShownRef.current = false
     setAuthPage('login')
   }
 
@@ -709,16 +719,44 @@ export default function App() {
   }
 
   if (!profile) {
-    if (authPage === 'register') {
-      return <RegisterPage onGoToLogin={() => setAuthPage('login')} onGoToVerify={() => setAuthPage('verify')} />
-    }
-    if (authPage === 'verify') {
-      return <VerifyPage onGoToLogin={() => setAuthPage('login')} />
-    }
-    return <LoginPage onGoToRegister={() => setAuthPage('register')} onGoToVerify={() => setAuthPage('verify')} />
+    return (
+      <>
+        <AuthNavbar />
+        {authPage === 'register' && <RegisterPage onGoToLogin={() => setAuthPage('login')} onGoToVerify={() => setAuthPage('verify')} />}
+        {authPage === 'verify' && <VerifyPage onGoToLogin={() => setAuthPage('login')} />}
+        {authPage === 'login' && <LoginPage onGoToRegister={() => setAuthPage('register')} onGoToVerify={() => setAuthPage('verify')} />}
+      </>
+    )
   }
 
   const initials = profile ? `${profile.nome[0] ?? ''}${profile.cognome[0] ?? ''}`.toUpperCase() : ''
+
+  if (showWelcome && welcomeProfile) {
+    const masculineEndingInA = ['luca', 'nicola', 'mattia', 'enea', 'battista', 'barnaba', 'tobia']
+    const unisexNames = ['andrea', 'elia', 'sacha', 'sascha']
+    const nomeLower = welcomeProfile.nome.trim().toLowerCase()
+    const isUnisex = unisexNames.includes(nomeLower)
+    const isFeminine = !isUnisex && nomeLower.endsWith('a') && !masculineEndingInA.includes(nomeLower)
+    const isFirstTime = !localStorage.getItem(`welcomed_${welcomeProfile.id}`)
+    if (isFirstTime) localStorage.setItem(`welcomed_${welcomeProfile.id}`, '1')
+    const greeting = isUnisex
+      ? (isFirstTime ? 'Benvenuto/a' : 'Bentornato/a')
+      : isFirstTime
+        ? (isFeminine ? 'Benvenuta' : 'Benvenuto')
+        : (isFeminine ? 'Bentornata' : 'Bentornato')
+
+    return (
+      <div className="welcome-screen">
+        <div className="welcome-card">
+          <div className="welcome-check">✓</div>
+          <p className="welcome-sub">Accesso effettuato con successo</p>
+          <h2 className="welcome-title">{greeting} tra i consiglieri</h2>
+          <p className="welcome-palazzina">Palazzina {welcomeProfile.palazzina}</p>
+          <p className="welcome-name">{welcomeProfile.nome} {welcomeProfile.cognome}</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="app-shell">

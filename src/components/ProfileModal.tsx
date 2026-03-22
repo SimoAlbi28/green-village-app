@@ -240,6 +240,7 @@ export default function ProfileModal({ profile, userEmail, consiglieri, onClose,
         {profileView === 'consiglieri' && !selectedConsigliere && (
           <div className="consiglieri-view">
             <h3 className="consiglieri-title">Palazzina {profile.palazzina}</h3>
+            <p className="consiglieri-count">Consiglieri: {consiglieri.length}</p>
             <ul className="consiglieri-list">
               {[...consiglieri]
                 .sort((a, b) => (a.id === profile.id ? -1 : b.id === profile.id ? 1 : 0))
