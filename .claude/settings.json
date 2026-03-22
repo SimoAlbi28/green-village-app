@@ -15,7 +15,8 @@
       "Bash(convert square.png -resize 470x470 -gravity center -background white -extent 512x512 icon-512.png)",
       "Bash(KEY=\"sb_secret_35SWeJtlWg1T_gI7rRKDRw_24kOHYbg\" URL=\"https://vbogndiocysnuhusuvle.supabase.co\" curl -s \"$URL/auth/v1/admin/users\" -H \"apikey: $KEY\" -H \"Authorization: Bearer $KEY\")",
       "Bash(KEY=\"sb_secret_35SWeJtlWg1T_gI7rRKDRw_24kOHYbg\" URL=\"https://vbogndiocysnuhusuvle.supabase.co\" __NEW_LINE_f5c7e7af04038835__ for t in note manutenzioni cartelle)",
-      "Bash(do curl:*)"
+      "Bash(do curl:*)",
+      "Bash(KEY=\"sb_secret_35SWeJtlWg1T_gI7rRKDRw_24kOHYbg\" URL=\"https://vbogndiocysnuhusuvle.supabase.co\" __NEW_LINE_a7ad03d8cba08fc5__ for t in note manutenzioni cartelle)"
     ]
   }
 }
