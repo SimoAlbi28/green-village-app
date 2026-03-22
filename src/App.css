@@ -3,6 +3,11 @@
   touch-action: manipulation;
 }
 
+html {
+  height: 100%;
+  overflow: hidden;
+}
+
 /* ===== NAVBAR ===== */
 .app-navbar {
   position: fixed;
@@ -127,22 +132,26 @@
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #edf7ee;
-  margin: 0;
+  margin: 0 auto;
   padding: 15px;
   padding-left: max(15px, env(safe-area-inset-left));
   padding-right: max(15px, env(safe-area-inset-right));
-  padding-top: calc(100px + env(safe-area-inset-top) + 20px);
+  padding-top: calc(env(safe-area-inset-top) + 90px);
   padding-bottom: max(20px, env(safe-area-inset-bottom));
   max-width: 480px;
   width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+  height: 100%;
   color: #222;
   user-select: none;
+  overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .app-shell {
@@ -352,26 +361,7 @@ h1 {
   width: 100%;
 }
 
-body {
-  font-family: 'Segoe UI', sans-serif;
-  padding: 15px;
-  padding-left: max(15px, env(safe-area-inset-left));
-  padding-right: max(15px, env(safe-area-inset-right));
-  padding-top: calc(100px + env(safe-area-inset-top) + 20px);
-  padding-bottom: max(15px, env(safe-area-inset-bottom));
-  margin: 0 auto;
-  max-width: 480px;
-  width: 100%;
-  background: #edf7ee;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  justify-content: flex-start;
-  align-items: center;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
+/* secondo body selector rimosso - unificato nel primo */
 
 #header {
   width: 100%;
