@@ -153,7 +153,13 @@ export default function ProfileModal({ profile, userEmail, consiglieri, onClose,
                 <span className="profile-info-value">{profile.telefono}</span>
               </div>
             )}
-            <button className="btn-logout profile-logout-btn" onClick={onLogout}>🚪 Logout</button>
+            <button className="btn-logout profile-logout-btn" onClick={onLogout}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
+                <path d="M16 13v-2H7V8l-5 4 5 4v-3z"/>
+                <path d="M20 3H10c-1.1 0-2 .9-2 2v4h2V5h10v14H10v-4H8v4c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
+              </svg>
+              Logout
+            </button>
           </div>
         )}
 

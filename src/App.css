@@ -439,6 +439,12 @@ h2 {
   user-select: none;
 }
 
+.section-divider {
+  border: none;
+  border-top: 1px solid #c8e6c9;
+  margin: 12px 0;
+}
+
 #buttons-container {
   display: flex;
   flex-wrap: nowrap;
@@ -1614,8 +1620,24 @@ button {
 }
 
 .profile-logout-btn {
-  margin-top: 8px;
-  max-width: 140px;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: transparent;
+  color: #c62828;
+  border: 2px solid #c62828;
+  border-radius: 24px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: background 0.2s, color 0.2s;
+}
+.profile-logout-btn:hover {
+  background: #c62828;
+  color: white;
 }
 
 .profile-close-btn {
@@ -1782,18 +1804,6 @@ button {
 }
 
 .btn-logout {
-  background: #f44336;
-  color: white;
-  border: 1px solid black;
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
   white-space: nowrap;
-}
-
-.btn-logout:hover {
-  background: #c62828;
 }

@@ -93,6 +93,8 @@ export default function FolderPage({
         </div>
       </div>
 
+      <hr className="section-divider" />
+
       <div id="reader" ref={readerRef} style={{ display: scannerActive ? 'block' : 'none' }}></div>
 
       <div id="search-box">
