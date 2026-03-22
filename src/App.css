@@ -369,6 +369,7 @@ h1 {
 /* FOLDER PAGE */
 .page-folder {
   width: 100%;
+  overflow-x: hidden;
 }
 
 /* secondo body selector rimosso - unificato nel primo */
@@ -614,16 +615,17 @@ h2 {
 
 .manutenzione {
   background-color: #cecece;
+  width: 100%;
   max-width: 400px;
   border: 3px solid black;
   border-radius: 10px;
   padding: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   text-align: center;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
   margin-bottom: 18px;
   box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .manutenzione.highlight {

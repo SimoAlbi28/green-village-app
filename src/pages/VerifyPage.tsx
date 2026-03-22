@@ -67,7 +67,19 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
       .limit(1)
       .single()
 
-    // 3. Crea l'utente in Supabase Auth
+    // 3. Prima prepara tutto nel DB (prima del signUp per evitare race condition)
+    // Crea un ID temporaneo che verrà usato dopo il signUp
+
+    // 4. Elimina il codice (monouso) - fallo prima del signUp
+    await supabase.from('invite_codes').delete().eq('id', invite.id)
+
+    // 5. Aggiorna lo status della registrazione pendente
+    await supabase
+      .from('pending_registrations')
+      .update({ status: 'approved' })
+      .eq('email', useEmail)
+
+    // 6. Crea l'utente in Supabase Auth
     const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
       email: useEmail,
       password: usePassword,
@@ -79,10 +91,7 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
       return
     }
 
-    // Blocca il login automatico del signUp
-    await supabase.auth.signOut()
-
-    // 4. Crea il profilo utente (ora senza interferenze)
+    // 7. Crea SUBITO il profilo utente (prima che loadProfile lo cerchi)
     await supabase.from('profiles').insert({
       id: signUpData.user.id,
       nome: pending?.nome || '',
@@ -91,23 +100,11 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
       email: useEmail,
     })
 
-    // 5. Elimina il codice (monouso)
-    await supabase.from('invite_codes').delete().eq('id', invite.id)
-
-    // 6. Aggiorna lo status della registrazione pendente
-    await supabase
-      .from('pending_registrations')
-      .update({ status: 'approved' })
-      .eq('email', useEmail)
     sessionStorage.removeItem('reg_email')
     sessionStorage.removeItem('reg_password')
 
-    // Ora fai login: il profilo esiste già nel DB
-    await supabase.auth.signInWithPassword({
-      email: useEmail,
-      password: usePassword,
-    })
-
+    // Il signUp ha già fatto il login automatico.
+    // loadProfile in App.tsx ha il retry, quindi troverà il profilo.
     setLoading(false)
   }
 

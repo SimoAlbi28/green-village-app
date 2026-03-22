@@ -63,10 +63,9 @@ export default function App() {
       if (email) setUserEmail(email)
       const { data, error: profileErr } = await supabase.from('profiles').select('*').eq('id', userId).single()
       if (profileErr || !data) {
-        // Il profilo potrebbe non essere ancora stato creato (durante registrazione)
-        if (retries < 5) {
-          setTimeout(() => loadProfile(userId, isNewLogin, retries + 1), 1000)
-          return
+        if (retries < 10) {
+          await new Promise(resolve => setTimeout(resolve, 800))
+          return loadProfile(userId, isNewLogin, retries + 1)
         }
         console.error('Profilo non trovato:', profileErr?.message)
         await supabase.auth.signOut()

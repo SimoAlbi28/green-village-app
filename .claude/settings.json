@@ -7,7 +7,12 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git fetch:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(KEY=\"sb_secret_35SWeJtlWg1T_gI7rRKDRw_24kOHYbg\" URL=\"https://vbogndiocysnuhusuvle.supabase.co\" __NEW_LINE_c6b98c08c9e9ef5e__ curl -s \"$URL/auth/v1/admin/users\" -H \"apikey: $KEY\" -H \"Authorization: Bearer $KEY\")",
+      "Bash(convert logo-green-village.png -trim +repage trimmed.png)",
+      "Bash(identify trimmed.png)",
+      "Bash(convert trimmed.png -gravity center -background white -extent 305x305 square.png)",
+      "Bash(convert square.png -resize 470x470 -gravity center -background white -extent 512x512 icon-512.png)"
     ]
   }
 }
