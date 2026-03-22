@@ -145,7 +145,7 @@ body {
   padding: 15px;
   padding-left: max(15px, env(safe-area-inset-left));
   padding-right: max(15px, env(safe-area-inset-right));
-  padding-top: calc(env(safe-area-inset-top) + 180px);
+  padding-top: calc(env(safe-area-inset-top) + 210px);
   padding-bottom: max(20px, env(safe-area-inset-bottom));
   max-width: 480px;
   width: 100%;
@@ -170,6 +170,7 @@ body {
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
+  padding-top: 60px;
 }
 
 .app-footer {
@@ -377,7 +378,7 @@ h1 {
   display: flex;
   justify-content: center;
   padding: 8px;
-  margin-top: 50px;
+  margin-top: 0;
   margin-bottom: 30px;
 }
 
