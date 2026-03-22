@@ -693,9 +693,13 @@ export default function App() {
       nome: updates.nome,
       cognome: updates.cognome,
       telefono: updates.telefono || null,
-      avatar_color: updates.avatar_color || null,
     }).eq('id', profile.id)
     if (updateErr) return { error: 'Errore nel salvataggio: ' + updateErr.message }
+
+    // Salva avatar_color separatamente (richiede colonna avatar_color nella tabella profiles)
+    if (updates.avatar_color !== undefined) {
+      await supabase.from('profiles').update({ avatar_color: updates.avatar_color || null }).eq('id', profile.id)
+    }
     setProfile(prev => prev ? { ...prev, nome: updates.nome, cognome: updates.cognome, telefono: updates.telefono, avatar_color: updates.avatar_color } : null)
     setConsiglieri(prev => prev.map(c => c.id === profile.id ? { ...c, nome: updates.nome, cognome: updates.cognome, telefono: updates.telefono, avatar_color: updates.avatar_color } : c))
   }

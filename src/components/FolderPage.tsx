@@ -72,12 +72,13 @@ export default function FolderPage({
       <div id="buttons-container">
         <div className="row-btns">
           <button id="create-manutenzione" onClick={() => onSetShowNomeModal(true)}>
-            ➕ Crea
+            ➕ Aggiungi
           </button>
           <button
             id="start-scan"
             onClick={onStartScan}
             disabled={scannerActive}
+            style={{ display: 'none' }}
           >
             📷 Avvia
           </button>
@@ -85,6 +86,7 @@ export default function FolderPage({
             id="stop-scan"
             onClick={onStopScan}
             disabled={!scannerActive}
+            style={{ display: 'none' }}
           >
             Chiudi 📷
           </button>

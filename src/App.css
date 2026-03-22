@@ -179,26 +179,20 @@ h1 {
 }
 
 #btn-add-folder {
-  background: linear-gradient(135deg, #43a047, #2e7d32);
+  background: #66bb6a;
   color: white;
-  border: none;
-  padding: 13px 28px;
-  border-radius: 50px;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  border: 1px solid black;
+  padding: 12px 0;
+  border-radius: 10px;
+  font-size: 16px;
   cursor: pointer;
   user-select: none;
-  transition: box-shadow 0.2s ease, transform 0.1s ease;
-  box-shadow: 0 3px 10px rgba(46, 125, 50, 0.35);
+  transition: background-color 0.3s ease;
+  max-width: 170px;
+  width: 100%;
   display: block;
   margin: 0 auto 20px auto;
   box-sizing: border-box;
-}
-
-#btn-add-folder:hover {
-  box-shadow: 0 5px 16px rgba(46, 125, 50, 0.45);
-  transform: translateY(-1px);
 }
 
 /* Cartelle container */
@@ -543,15 +537,15 @@ h2 {
   border: 1px solid black;
   background-color: #3498db;
   color: white;
-  padding: 5px 0;
+  padding: 5px 20px;
   border-radius: 5px;
   cursor: pointer;
   user-select: none;
   font-size: 13px;
   transition: background-color 0.3s ease;
   box-sizing: border-box;
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 auto;
+  width: auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1101,14 +1095,16 @@ button {
 }
 
 .auth-page {
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
   background: #f0f4ff;
   padding: 20px;
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .auth-title {
