@@ -111,6 +111,9 @@ export default function App() {
       })
   }, [profile])
 
+  // Ref per evitare loop: ignora aggiornamenti realtime se il salvataggio è locale
+  const skipRealtimeRef = useRef(false)
+
   // Carica folders da Supabase quando il profilo è disponibile
   useEffect(() => {
     if (!profile) return
@@ -131,12 +134,42 @@ export default function App() {
         }
         setLoading(false)
       })
+
+    // Realtime: ascolta modifiche da altri consiglieri della stessa palazzina
+    const channel = supabase
+      .channel(`building_data_${profile.palazzina}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'building_data',
+          filter: `palazzina=eq.${profile.palazzina}`,
+        },
+        (payload) => {
+          if (skipRealtimeRef.current) {
+            skipRealtimeRef.current = false
+            return
+          }
+          const newData = (payload.new as { key?: string; value?: Folders })
+          if (newData?.key === 'folders' && newData?.value) {
+            setFolders(newData.value)
+            localStorage.setItem(`folders_${profile.palazzina}`, JSON.stringify(newData.value))
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [profile])
 
   // Salva folders su Supabase (e localStorage come cache)
   useEffect(() => {
     if (loading || !profile) return
     localStorage.setItem(`folders_${profile.palazzina}`, JSON.stringify(folders))
+    skipRealtimeRef.current = true
     supabase
       .from('building_data')
       .upsert({ palazzina: profile.palazzina, key: 'folders', value: folders })
