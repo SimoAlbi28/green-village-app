@@ -27,6 +27,7 @@ export default function App() {
   const [authPage, setAuthPage] = useState<'login' | 'register' | 'verify'>('login')
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const [splashDone, setSplashDone] = useState(false)
   const isRegisteringRef = useRef(false)
 
   const [page, setPage] = useState<'home' | 'folder'>('home')
@@ -55,6 +56,12 @@ export default function App() {
   const [showWelcome, setShowWelcome] = useState(false)
   const [welcomeProfile, setWelcomeProfile] = useState<UserProfile | null>(null)
   const welcomeShownRef = useRef(false)
+
+  // Splash screen: mostra per almeno 2 secondi
+  useEffect(() => {
+    const timer = setTimeout(() => setSplashDone(true), 2000)
+    return () => clearTimeout(timer)
+  }, [])
 
   // Auth: controlla sessione al mount e ascolta cambiamenti
   useEffect(() => {
@@ -836,8 +843,13 @@ export default function App() {
     setConsiglieri(prev => prev.map(c => c.id === profile.id ? { ...c, nome: updates.nome, cognome: updates.cognome, telefono: updates.telefono, avatar_color: updates.avatar_color } : c))
   }
 
-  if (authLoading) {
-    return <div className="auth-loading">Caricamento...</div>
+  if (authLoading || !splashDone) {
+    return (
+      <div className="splash-screen">
+        <img src="/logo-green-village.png" alt="Green Village" className="splash-logo" />
+        <p className="splash-text">Green Village</p>
+      </div>
+    )
   }
 
   if (!profile) {
