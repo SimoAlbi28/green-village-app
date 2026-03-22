@@ -70,8 +70,7 @@ export default function RegisterPage({ onGoToLogin, onGoToVerify }: RegisterPage
         <div className="auth-card">
           <h2 className="auth-card-title">Richiesta inviata!</h2>
           <p className="auth-info">
-            La tua richiesta è stata inviata. Riceverai un codice via email non appena
-            verificata la tua identità come consigliere della palazzina.
+            La tua richiesta è stata inviata. La verifica potrebbe richiedere un po' di tempo: puoi chiudere l'app tranquillamente, i tuoi dati sono salvati. Quando riceverai il codice via email, rientra nell'app e clicca su <strong>"Ho il codice"</strong> nella schermata di login per completare la registrazione.
           </p>
           <button className="auth-btn-primary" onClick={onGoToVerify} style={{ display: 'block', margin: '4px auto 0' }}>
             Ho ricevuto il codice
@@ -104,8 +103,8 @@ export default function RegisterPage({ onGoToLogin, onGoToVerify }: RegisterPage
         <input className="auth-input" type="text" placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} />
         <input className="auth-input" type="text" placeholder="Cognome" value={cognome} onChange={(e) => setCognome(e.target.value)} />
         <input className="auth-input" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input className="auth-input" type="password" placeholder="Password (min. 6 caratteri)" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
-        <input className="auth-input" type="password" placeholder="Conferma password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" />
+        <input className="auth-input" type="password" placeholder="Password (min. 6 caratteri)" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="off" data-form-type="other" />
+        <input className="auth-input" type="password" placeholder="Conferma password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="off" data-form-type="other" />
         <label className="auth-label">Palazzina di appartenenza</label>
         <select className="auth-input" value={palazzina} onChange={(e) => setPalazzina(e.target.value)}>
           {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'].map((p) => (

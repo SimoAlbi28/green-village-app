@@ -165,7 +165,8 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
+              autoComplete="off"
+              data-form-type="other"
             />
           </>
         )}

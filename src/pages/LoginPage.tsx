@@ -55,7 +55,8 @@ export default function LoginPage({ onGoToRegister, onGoToVerify }: LoginPagePro
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
+          autoComplete="off"
+          data-form-type="other"
         />
         <input
           className="auth-input"
@@ -64,7 +65,8 @@ export default function LoginPage({ onGoToRegister, onGoToVerify }: LoginPagePro
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-          autoComplete="current-password"
+          autoComplete="off"
+          data-form-type="other"
         />
         <button className="auth-btn-primary" onClick={handleLogin} disabled={loading} style={{ display: 'block', margin: '4px auto 0' }}>
           {loading ? 'Accesso in corso...' : 'Accedi'}
