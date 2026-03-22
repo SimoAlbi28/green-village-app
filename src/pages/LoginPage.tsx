@@ -24,8 +24,10 @@ export default function LoginPage({ onGoToRegister, onGoToVerify }: LoginPagePro
       if (error) {
         if (error.message.toLowerCase().includes('email not confirmed')) {
           setError('Email non ancora confermata. Contatta l\'amministratore.')
-        } else {
+        } else if (error.message.toLowerCase().includes('invalid login credentials')) {
           setError('Credenziali non valide. Controlla email e password.')
+        } else {
+          setError('Errore: ' + error.message)
         }
       }
     } catch {

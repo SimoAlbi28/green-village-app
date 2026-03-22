@@ -61,18 +61,24 @@ export default function App() {
       const { data: authData } = await supabase.auth.getUser()
       const email = authData.user?.email ?? ''
       if (email) setUserEmail(email)
-      const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
-      if (data) {
-        setProfile(data)
-        if (email && !data.email) {
-          supabase.from('profiles').update({ email }).eq('id', userId).then()
-        }
-        if (isNewLogin && !welcomeShownRef.current) {
-          welcomeShownRef.current = true
-          setWelcomeProfile(data)
-          setShowWelcome(true)
-          setTimeout(() => setShowWelcome(false), 4000)
-        }
+      const { data, error: profileErr } = await supabase.from('profiles').select('*').eq('id', userId).single()
+      if (profileErr || !data) {
+        console.error('Profilo non trovato:', profileErr?.message)
+        // Se il profilo non esiste, fai logout per evitare blocchi
+        await supabase.auth.signOut()
+        setProfile(null)
+        setAuthLoading(false)
+        return
+      }
+      setProfile(data)
+      if (email && !data.email) {
+        supabase.from('profiles').update({ email }).eq('id', userId).then()
+      }
+      if (isNewLogin && !welcomeShownRef.current) {
+        welcomeShownRef.current = true
+        setWelcomeProfile(data)
+        setShowWelcome(true)
+        setTimeout(() => setShowWelcome(false), 4000)
       }
       setAuthLoading(false)
     }
