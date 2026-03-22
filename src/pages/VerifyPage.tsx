@@ -99,8 +99,12 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
     sessionStorage.removeItem('reg_email')
     sessionStorage.removeItem('reg_password')
 
-    // Il signUp senza conferma email fa login automatico
-    // onAuthStateChange in App.tsx caricherà il profilo e navigherà alla home
+    // Fai login esplicito per assicurarsi che l'utente entri
+    await supabase.auth.signInWithPassword({
+      email: useEmail,
+      password: usePassword,
+    })
+
     setLoading(false)
   }
 
