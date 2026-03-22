@@ -19,7 +19,6 @@ interface FolderPageProps {
   onSetNomeInput: (value: string) => void
   onSetShowNomeModal: (show: boolean) => void
   onAddManutenzione: () => void
-  onHomeClick: () => void
   onStartScan: () => void
   onStopScan: () => void
   nomeInputRef: React.RefObject<HTMLInputElement | null>
@@ -46,7 +45,6 @@ export default function FolderPage({
   onSetNomeInput,
   onSetShowNomeModal,
   onAddManutenzione,
-  onHomeClick,
   onStartScan,
   onStopScan,
   nomeInputRef,
@@ -73,9 +71,6 @@ export default function FolderPage({
 
       <div id="buttons-container">
         <div className="row-btns">
-          <button id="btn-home" onClick={onHomeClick}>
-            🏠 Home
-          </button>
           <button id="create-manutenzione" onClick={() => onSetShowNomeModal(true)}>
             ➕ Crea
           </button>

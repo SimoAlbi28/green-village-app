@@ -24,4 +24,6 @@ export type UserProfile = {
   cognome: string
   palazzina: string
   telefono?: string
+  email?: string
+  avatar_color?: string
 }

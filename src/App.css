@@ -3,6 +3,98 @@
   touch-action: manipulation;
 }
 
+/* ===== NAVBAR ===== */
+.app-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: #fff;
+  border-bottom: 2px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  padding-top: env(safe-area-inset-top);
+  z-index: 200;
+  box-sizing: border-box;
+}
+
+.navbar-left,
+.navbar-right {
+  width: 90px;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-left {
+  margin-left: -16px;
+}
+
+.navbar-right {
+  justify-content: flex-end;
+}
+
+.navbar-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  gap: 1px;
+}
+
+.navbar-username {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.navbar-title {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-align: center;
+  background: linear-gradient(135deg, #2d6a2d 0%, #5cb85c 50%, #1a4a1a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-transform: uppercase;
+  position: relative;
+  padding-bottom: 3px;
+}
+
+.navbar-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #2d6a2d, #5cb85c);
+  border-radius: 2px;
+}
+
+.navbar-logo {
+  height: 52px;
+  cursor: pointer;
+  object-fit: contain;
+}
+
+.navbar-logo-small {
+  height: 52px;
+  cursor: pointer;
+  object-fit: contain;
+}
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #f0f4ff;
@@ -10,7 +102,7 @@ body {
   padding: 15px;
   padding-left: max(15px, env(safe-area-inset-left));
   padding-right: max(15px, env(safe-area-inset-right));
-  padding-top: max(120px, calc(env(safe-area-inset-top) + 80px));
+  padding-top: calc(64px + env(safe-area-inset-top) + 16px);
   padding-bottom: max(15px, env(safe-area-inset-bottom));
   max-width: 480px;
   width: 100%;
@@ -87,20 +179,26 @@ h1 {
 }
 
 #btn-add-folder {
-  background: #00d9ff;
+  background: linear-gradient(135deg, #43a047, #2e7d32);
   color: white;
-  border: 2px solid black;
-  padding: 12px 0;
-  border-radius: 10px;
-  font-size: 16px;
+  border: none;
+  padding: 13px 28px;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.3s ease;
-  max-width: 170px;
-  width: 100%;
+  transition: box-shadow 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 3px 10px rgba(46, 125, 50, 0.35);
   display: block;
   margin: 0 auto 20px auto;
   box-sizing: border-box;
+}
+
+#btn-add-folder:hover {
+  box-shadow: 0 5px 16px rgba(46, 125, 50, 0.45);
+  transform: translateY(-1px);
 }
 
 /* Cartelle container */
@@ -291,7 +389,7 @@ body {
   flex-direction: column;
   gap: 4px;
   margin-bottom: 30px;
-  margin-top: 50px;
+  margin-top: 80px;
 }
 
 .title-top {
@@ -502,7 +600,7 @@ h2 {
   text-align: center;
   padding: 5px 10px;
   border-radius: 6px;
-  border: 2px solid black;
+  border: 1px solid black;
   box-sizing: border-box;
 }
 
@@ -520,7 +618,7 @@ h2 {
   font-size: 16px;
   padding: 4px 8px;
   cursor: pointer;
-  border: 2px solid black;
+  border: 1px solid black;
   background: none;
   color: white;
   border-radius: 6px;
@@ -1162,7 +1260,7 @@ button {
   border-radius: 50%;
   background: #1a3a6b;
   color: white;
-  border: 2px solid black;
+  border: 1px solid black;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -1179,11 +1277,16 @@ button {
   background: white;
   border-radius: 16px;
   padding: 20px;
+  padding-bottom: 0;
   width: 90%;
   max-width: 340px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.2);
   position: relative;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+  overflow: hidden;
 }
 
 .profile-modal-tabs {
@@ -1272,6 +1375,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  overflow-y: auto;
   padding-bottom: 8px;
   max-height: 60vh;
   overflow-y: auto;
@@ -1294,6 +1398,10 @@ button {
   gap: 10px;
   justify-content: center;
   margin-top: 4px;
+  padding: 12px 0;
+  background: white;
+  border-top: 1px solid #eee;
+  flex-shrink: 0;
 }
 
 .edit-actions button {
@@ -1422,17 +1530,56 @@ button {
   font-weight: 300;
 }
 
+.avatar-color-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 6px 4px;
+  overflow: visible;
+}
+
+.avatar-color-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  min-width: 0;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.avatar-color-swatch:hover {
+  transform: scale(1.15);
+}
+
+.avatar-color-swatch--selected {
+  border-color: #000;
+  transform: scale(1.2);
+  box-shadow: 0 0 0 2px #fff inset;
+}
+
+.avatar-color-preview-top {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
 .btn-back-consiglieri {
-  background: none;
+  background: #e8edf5;
   border: none;
   color: #1a3a6b;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  padding: 0;
+  padding: 10px 16px;
   min-width: 0;
   max-width: none;
-  text-align: left;
+  text-align: center;
+  border-radius: 8px;
+  width: 100%;
+  margin-top: 16px;
 }
 
 .consigliere-self {
@@ -1480,7 +1627,7 @@ button {
 .btn-logout {
   background: #f44336;
   color: white;
-  border: 2px solid black;
+  border: 1px solid black;
   padding: 10px 14px;
   border-radius: 10px;
   font-size: 14px;

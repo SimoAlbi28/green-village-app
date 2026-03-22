@@ -69,6 +69,7 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
       nome: pending?.nome || '',
       cognome: pending?.cognome || '',
       palazzina: invite.palazzina,
+      email: savedEmail,
     })
 
     // 5. Elimina il codice (monouso)
@@ -127,6 +128,7 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
           className="auth-btn-primary"
           onClick={handleVerify}
           disabled={loading || !code.trim()}
+          style={{ display: 'block', margin: '4px auto 0' }}
         >
           {loading ? 'Verifica in corso...' : 'Completa registrazione'}
         </button>

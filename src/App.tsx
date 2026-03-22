@@ -4,7 +4,8 @@ import { Html5Qrcode } from 'html5-qrcode'
 import type { Folders, Note, UserProfile } from './types'
 import HomePage from './components/HomePage'
 import FolderPage from './components/FolderPage'
-import Footer from './components/Footer'
+import Navbar from './components/Navbar'
+import ProfileModal from './components/ProfileModal'
 import { supabase } from './lib/supabase'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -48,14 +49,22 @@ export default function App() {
   const pageFolderRef = useRef<HTMLDivElement>(null)
 
   const [userEmail, setUserEmail] = useState('')
+  const [profileOpen, setProfileOpen] = useState(false)
 
   // Auth: controlla sessione al mount e ascolta cambiamenti
   useEffect(() => {
     const loadProfile = async (userId: string) => {
       const { data: authData } = await supabase.auth.getUser()
-      if (authData.user?.email) setUserEmail(authData.user.email)
+      const email = authData.user?.email ?? ''
+      if (email) setUserEmail(email)
       const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
-      if (data) setProfile(data)
+      if (data) {
+        setProfile(data)
+        // Sincronizza email nel profilo se mancante
+        if (email && !data.email) {
+          supabase.from('profiles').update({ email }).eq('id', userId).then()
+        }
+      }
       setAuthLoading(false)
     }
 
@@ -125,19 +134,14 @@ export default function App() {
       .then()
   }, [folders, loading, profile])
 
-  // Resetta scroll della pagina quando si entra in una cartella
+  // Scroll in cima ad ogni cambio pagina
   useEffect(() => {
-    if (currentAnno) {
-      if (manutenzioniListRef.current) {
-        manutenzioniListRef.current.scrollTop = 0
-      }
-      if (pageFolderRef.current) {
-        pageFolderRef.current.scrollTop = 0
-      }
-      // Resetta anche il body e html
-      window.scrollTo(0, 0)
-    }
-  }, [currentAnno])
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+    if (manutenzioniListRef.current) manutenzioniListRef.current.scrollTop = 0
+    if (pageFolderRef.current) pageFolderRef.current.scrollTop = 0
+  }, [page])
 
   // Focus automatico quando si apre il modal manutenzione
   useEffect(() => {
@@ -615,8 +619,6 @@ export default function App() {
         folderNameInput={folderNameInput}
         showYearModal={showYearModal}
         profile={profile!}
-        userEmail={userEmail}
-        consiglieri={consiglieri}
         onAddFolder={aggiungiCartella}
         onSetYearInput={setYearInput}
         onSetFolderNameInput={setFolderNameInput}
@@ -625,8 +627,6 @@ export default function App() {
         onRenameFolder={rinominaCartella}
         onDeleteFolder={eliminaCartella}
         onCopyFolder={copiaTuttoCartella}
-        onLogout={handleLogout}
-        onUpdateProfile={handleUpdateProfile}
       />
     )
   }
@@ -662,7 +662,6 @@ export default function App() {
         onSetNomeInput={setNomeInput}
         onSetShowNomeModal={setShowNomeModal}
         onAddManutenzione={aggiungiManutenzione}
-        onHomeClick={tornaHome}
         onStartScan={avviaScanner}
         onStopScan={fermaScanner}
         nomeInputRef={nomeInputRef}
@@ -678,10 +677,11 @@ export default function App() {
     setProfile(null)
     setFolders({})
     setLoading(true)
+    setProfileOpen(false)
     setAuthPage('login')
   }
 
-  const handleUpdateProfile = async (updates: { nome: string; cognome: string; telefono?: string; oldPassword?: string; newPassword?: string }): Promise<{ error?: string } | void> => {
+  const handleUpdateProfile = async (updates: { nome: string; cognome: string; telefono?: string; oldPassword?: string; newPassword?: string; avatar_color?: string }): Promise<{ error?: string } | void> => {
     if (!profile) return
     if (updates.newPassword && updates.oldPassword) {
       const { error: signInErr } = await supabase.auth.signInWithPassword({ email: userEmail, password: updates.oldPassword })
@@ -689,12 +689,15 @@ export default function App() {
       const { error: pwdErr } = await supabase.auth.updateUser({ password: updates.newPassword })
       if (pwdErr) return { error: 'Errore nel cambio password: ' + pwdErr.message }
     }
-    await supabase.from('profiles').update({
+    const { error: updateErr } = await supabase.from('profiles').update({
       nome: updates.nome,
       cognome: updates.cognome,
       telefono: updates.telefono || null,
+      avatar_color: updates.avatar_color || null,
     }).eq('id', profile.id)
-    setProfile(prev => prev ? { ...prev, nome: updates.nome, cognome: updates.cognome, telefono: updates.telefono } : null)
+    if (updateErr) return { error: 'Errore nel salvataggio: ' + updateErr.message }
+    setProfile(prev => prev ? { ...prev, nome: updates.nome, cognome: updates.cognome, telefono: updates.telefono, avatar_color: updates.avatar_color } : null)
+    setConsiglieri(prev => prev.map(c => c.id === profile.id ? { ...c, nome: updates.nome, cognome: updates.cognome, telefono: updates.telefono, avatar_color: updates.avatar_color } : c))
   }
 
   if (authLoading) {
@@ -711,8 +714,27 @@ export default function App() {
     return <LoginPage onGoToRegister={() => setAuthPage('register')} onGoToVerify={() => setAuthPage('verify')} />
   }
 
+  const initials = profile ? `${profile.nome[0] ?? ''}${profile.cognome[0] ?? ''}`.toUpperCase() : ''
+
   return (
     <div className="app-shell">
+      <Navbar
+        initials={initials}
+        avatarColor={profile?.avatar_color}
+        userName={profile ? `${profile.nome} ${profile.cognome}` : undefined}
+        onHomeClick={tornaHome}
+        onProfileOpen={() => setProfileOpen(true)}
+      />
+      {profileOpen && (
+        <ProfileModal
+          profile={profile!}
+          userEmail={userEmail}
+          consiglieri={consiglieri}
+          onClose={() => setProfileOpen(false)}
+          onLogout={handleLogout}
+          onUpdateProfile={handleUpdateProfile}
+        />
+      )}
       {page === 'home' ? renderHome() : renderFolder()}
     </div>
   )
