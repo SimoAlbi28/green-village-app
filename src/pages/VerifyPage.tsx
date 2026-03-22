@@ -100,9 +100,6 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
     sessionStorage.removeItem('reg_email')
     sessionStorage.removeItem('reg_password')
 
-    // Fai logout per evitare l'accesso automatico dopo il signUp
-    await supabase.auth.signOut()
-
     setSuccess(true)
     setLoading(false)
   }
