@@ -23,7 +23,7 @@ export default function LoginPage({ onGoToRegister, onGoToVerify }: LoginPagePro
       const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password })
       if (error) {
         if (error.message.toLowerCase().includes('email not confirmed')) {
-          setError('Email non ancora confermata. Controlla la tua casella di posta e clicca il link di conferma.')
+          setError('Errore di accesso. Contatta l\'amministratore.')
         } else if (error.message.toLowerCase().includes('invalid login credentials')) {
           setError('Credenziali non valide. Controlla email e password.')
         } else {

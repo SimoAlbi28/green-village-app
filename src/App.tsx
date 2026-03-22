@@ -117,6 +117,9 @@ export default function App() {
       })
   }, [profile])
 
+  // Ref per ignorare eventi realtime causati dalle proprie azioni
+  const skipRealtimeRef = useRef(false)
+
   // Carica folders dalle tabelle separate e ricostruisce la struttura Folders
   const loadFolders = async (palazzina: string) => {
     const { data: cartelleData } = await supabase
@@ -177,12 +180,15 @@ export default function App() {
     const channel = supabase
       .channel(`realtime_${profile.palazzina}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cartelle' }, () => {
+        if (skipRealtimeRef.current) { skipRealtimeRef.current = false; return }
         loadFolders(profile.palazzina)
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'manutenzioni' }, () => {
+        if (skipRealtimeRef.current) { skipRealtimeRef.current = false; return }
         loadFolders(profile.palazzina)
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'note' }, () => {
+        if (skipRealtimeRef.current) { skipRealtimeRef.current = false; return }
         loadFolders(profile.palazzina)
       })
       .subscribe()
@@ -226,6 +232,7 @@ export default function App() {
     }
 
     if (!profile) return
+    skipRealtimeRef.current = true
     const id = Date.now().toString()
     const { error } = await supabase.from('cartelle').insert({
       id,
@@ -263,6 +270,7 @@ export default function App() {
       return
     }
 
+    skipRealtimeRef.current = true
     await supabase.from('cartelle').update({ nome: nuovoNome }).eq('id', anno)
     setFolders((prev) => ({
       ...prev,
@@ -274,6 +282,7 @@ export default function App() {
     if (
       confirm(`Sei sicuro di eliminare la cartella "${folders[anno].nome}"?`)
     ) {
+      skipRealtimeRef.current = true
       await supabase.from('cartelle').delete().eq('id', anno)
       setFolders((prev) => {
         const newFolders = { ...prev }
@@ -366,6 +375,7 @@ export default function App() {
       return
     }
 
+    skipRealtimeRef.current = true
     const id = Date.now().toString()
     const { error } = await supabase.from('manutenzioni').insert({
       id,
@@ -410,6 +420,7 @@ export default function App() {
       return
     }
 
+    skipRealtimeRef.current = true
     await supabase.from('manutenzioni').update({ nome: nuovoNome }).eq('id', id)
     setFolders((prev) => ({
       ...prev,
@@ -427,6 +438,7 @@ export default function App() {
     if (!currentAnno) return
     const nome = folders[currentAnno].manutenzioni[id].nome
     if (confirm(`Sei sicuro di voler eliminare "${nome}"?`)) {
+      skipRealtimeRef.current = true
       await supabase.from('manutenzioni').delete().eq('id', id)
       setFolders((prev) => ({
         ...prev,
@@ -470,6 +482,7 @@ export default function App() {
       return
     }
 
+    skipRealtimeRef.current = true
     if (noteInModifica && noteInModifica.manutenzioneId === id) {
       // Modifica nota esistente: recupera l'id della nota dal DB
       const { data: noteDb } = await supabase
@@ -516,6 +529,7 @@ export default function App() {
   const eliminaNota = async (id: string, index: number) => {
     if (!currentAnno) return
     if (confirm('Sei sicuro di voler eliminare questa nota?')) {
+      skipRealtimeRef.current = true
       // Recupera l'id della nota dal DB
       const { data: noteDb } = await supabase
         .from('note')

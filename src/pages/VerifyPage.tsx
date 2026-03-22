@@ -100,6 +100,9 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
     sessionStorage.removeItem('reg_email')
     sessionStorage.removeItem('reg_password')
 
+    // Fai logout per evitare l'accesso automatico dopo il signUp
+    await supabase.auth.signOut()
+
     setSuccess(true)
     setLoading(false)
   }
@@ -118,9 +121,9 @@ export default function VerifyPage({ onGoToLogin }: VerifyPageProps) {
         </div>
         <hr className="auth-divider-line" />
         <div className="auth-card">
-          <h2 className="auth-card-title">Account creato!</h2>
+          <h2 className="auth-card-title">Account creato con successo!</h2>
           <p className="auth-info">
-            Ti abbiamo inviato una email di conferma. Clicca il link nella email per attivare il tuo account, poi torna qui per accedere.
+            Ora puoi accedere con la tua email e password.
           </p>
           <button className="auth-btn-primary" onClick={onGoToLogin} style={{ display: 'block', margin: '16px auto 0' }}>
             Vai al login
