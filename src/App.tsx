@@ -65,9 +65,7 @@ export default function App() {
 
   // Auth: controlla sessione al mount e ascolta cambiamenti
   useEffect(() => {
-    const loadProfile = async (userId: string, isNewLogin = false, retries = 0) => {
-      const { data: authData } = await supabase.auth.getUser()
-      const email = authData.user?.email ?? ''
+    const loadProfile = async (userId: string, isNewLogin = false, retries = 0, email?: string) => {
       if (email) setUserEmail(email)
       const { data, error: profileErr } = await supabase.from('profiles').select('*').eq('id', userId).single()
       if (profileErr || !data) {
@@ -96,7 +94,7 @@ export default function App() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        loadProfile(session.user.id, false)
+        loadProfile(session.user.id, false, 0, session.user.email ?? undefined)
       } else {
         setAuthLoading(false)
       }
@@ -108,7 +106,7 @@ export default function App() {
       // Ignora INITIAL_SESSION: è già gestito da getSession() sopra
       if (event === 'INITIAL_SESSION') return
       if (session?.user) {
-        loadProfile(session.user.id, event === 'SIGNED_IN')
+        loadProfile(session.user.id, event === 'SIGNED_IN', 0, session.user.email ?? undefined)
       } else {
         setProfile(null)
         setFolders({})
@@ -195,26 +193,24 @@ export default function App() {
       }
     }
 
-    // Ricostruisci la struttura Folders preservando lo stato expanded
-    setFolders(prev => {
-      const newFolders: Folders = {}
-      for (const c of cartelleData) {
-        const manuts: Record<string, any> = {}
-        for (const m of manutenzioniData.filter(m => m.cartella_id === c.id)) {
-          const notePerM = noteData
-            .filter(n => n.manutenzione_id === m.id)
-            .map(n => ({ data: n.data, desc: n.descrizione }))
-          manuts[m.id] = {
-            nome: m.nome,
-            note: notePerM,
-            expanded: prev[c.id]?.manutenzioni[m.id]?.expanded ?? false,
-            qrId: m.qr_id || undefined,
-          }
+    // Ricostruisci la struttura Folders direttamente dal DB
+    const newFolders: Folders = {}
+    for (const c of cartelleData) {
+      const manuts: Record<string, any> = {}
+      for (const m of manutenzioniData.filter(m => m.cartella_id === c.id)) {
+        const notePerM = noteData
+          .filter(n => n.manutenzione_id === m.id)
+          .map(n => ({ data: n.data, desc: n.descrizione }))
+        manuts[m.id] = {
+          nome: m.nome,
+          note: notePerM,
+          expanded: false,
+          qrId: m.qr_id || undefined,
         }
-        newFolders[c.id] = { nome: c.nome, anno: c.anno, manutenzioni: manuts }
       }
-      return newFolders
-    })
+      newFolders[c.id] = { nome: c.nome, anno: c.anno, manutenzioni: manuts }
+    }
+    setFolders(newFolders)
     setLoading(false)
   }
 
@@ -329,6 +325,12 @@ export default function App() {
     ) {
       setSkipRealtime()
 
+      // Rimuovi subito dalla UI
+      setFolders(prev => {
+        const { [anno]: _, ...resto } = prev
+        return resto
+      })
+
       // Elimina in cascata: prima note, poi manutenzioni, poi cartella
       const { data: manuts } = await supabase
         .from('manutenzioni')
@@ -337,35 +339,29 @@ export default function App() {
 
       if (manuts && manuts.length > 0) {
         const manutIds = manuts.map(m => m.id)
-        await supabase
+        const { error: noteErr } = await supabase
           .from('note')
           .delete()
           .in('manutenzione_id', manutIds)
+        if (noteErr) console.error('Errore eliminazione note:', noteErr.message)
 
-        await supabase
+        const { error: manutErr } = await supabase
           .from('manutenzioni')
           .delete()
           .eq('cartella_id', anno)
+        if (manutErr) console.error('Errore eliminazione manutenzioni:', manutErr.message)
       }
 
-      const { data: deleted, error } = await supabase
+      const { error } = await supabase
         .from('cartelle')
         .delete()
         .eq('id', anno)
-        .select()
 
       if (error) {
         alert('Errore eliminazione cartella: ' + error.message)
-        return
+        // Ripristina dalla DB
+        if (profile) await loadFolders(profile.palazzina)
       }
-
-      // RLS può bloccare silenziosamente: verifica che sia stata eliminata davvero
-      if (!deleted || deleted.length === 0) {
-        alert('Errore: operazione non permessa. Controlla le RLS policies su Supabase.')
-        return
-      }
-
-      if (profile) await loadFolders(profile.palazzina)
     }
   }
 
@@ -461,9 +457,20 @@ export default function App() {
       qr_id: pendingQrId || null,
       created_by: profile.id,
     })
-    if (error) { alert('Errore nel salvataggio.'); return }
+    if (error) { console.error('Insert error:', error); alert('Errore nel salvataggio: ' + error.message); return }
 
-    if (profile) await loadFolders(profile.palazzina)
+    // Aggiungi subito nella UI
+    setFolders(prev => {
+      const updated = { ...prev }
+      updated[currentAnno] = {
+        ...updated[currentAnno],
+        manutenzioni: {
+          ...updated[currentAnno].manutenzioni,
+          [id]: { nome, note: [], expanded: false, qrId: pendingQrId || undefined }
+        }
+      }
+      return updated
+    })
     setNomeInput('')
     setPendingQrId(null)
     setShowNomeModal(false)
@@ -498,19 +505,25 @@ export default function App() {
     const nome = folders[currentAnno].manutenzioni[id].nome
     if (confirm(`Sei sicuro di voler eliminare "${nome}"?`)) {
       setSkipRealtime()
-      // Elimina prima le note collegate
-      await supabase.from('note').delete().eq('manutenzione_id', id)
-      const { data: deleted, error } = await supabase
-        .from('manutenzioni')
-        .delete()
-        .eq('id', id)
-        .select()
-      if (error) { alert('Errore eliminazione: ' + error.message); return }
-      if (!deleted || deleted.length === 0) {
-        alert('Errore: operazione non permessa. Controlla le RLS policies su Supabase.')
-        return
+
+      // Rimuovi subito dalla UI
+      setFolders(prev => {
+        const updated = { ...prev }
+        const { [id]: _, ...restoManutenzioni } = updated[currentAnno].manutenzioni
+        updated[currentAnno] = { ...updated[currentAnno], manutenzioni: restoManutenzioni }
+        return updated
+      })
+
+      // Elimina prima le note collegate, poi la manutenzione
+      const { error: noteErr } = await supabase.from('note').delete().eq('manutenzione_id', id)
+      if (noteErr) console.error('Errore eliminazione note:', noteErr.message)
+
+      const { error } = await supabase.from('manutenzioni').delete().eq('id', id)
+      if (error) {
+        alert('Errore eliminazione: ' + error.message)
+        // Ripristina dalla DB
+        if (profile) await loadFolders(profile.palazzina)
       }
-      if (profile) await loadFolders(profile.palazzina)
     }
   }
 
@@ -555,7 +568,22 @@ export default function App() {
           .eq('descrizione', notaOriginale.desc)
           .limit(1)
         if (noteDb && noteDb.length > 0) {
-          await supabase.from('note').update({ data, descrizione: desc }).eq('id', noteDb[0].id)
+          const { error } = await supabase.from('note').update({ data, descrizione: desc }).eq('id', noteDb[0].id)
+          if (!error) {
+            // Aggiorna subito nella UI
+            setFolders(prev => {
+              const updated = { ...prev }
+              const manut = { ...updated[currentAnno].manutenzioni[id] }
+              manut.note = manut.note.map((n, i) =>
+                i === noteInModifica.noteIndex ? { data, desc } : n
+              )
+              updated[currentAnno] = {
+                ...updated[currentAnno],
+                manutenzioni: { ...updated[currentAnno].manutenzioni, [id]: manut }
+              }
+              return updated
+            })
+          }
         }
       }
     } else {
@@ -567,9 +595,19 @@ export default function App() {
         created_by: profile.id,
       })
       if (noteErr) { alert('Errore nel salvataggio nota: ' + noteErr.message); return }
+      // Aggiungi subito nella UI
+      setFolders(prev => {
+        const updated = { ...prev }
+        const manut = { ...updated[currentAnno].manutenzioni[id] }
+        manut.note = [...manut.note, { data, desc }]
+        updated[currentAnno] = {
+          ...updated[currentAnno],
+          manutenzioni: { ...updated[currentAnno].manutenzioni, [id]: manut }
+        }
+        return updated
+      })
     }
 
-    if (profile) await loadFolders(profile.palazzina)
     setNoteInModifica(null)
   }
 
@@ -577,22 +615,37 @@ export default function App() {
     if (!currentAnno) return
     if (confirm('Sei sicuro di voler eliminare questa nota?')) {
       setSkipRealtime()
-      // Trova la nota da eliminare usando data e descrizione
+      // Salva riferimento alla nota prima di rimuoverla dalla UI
       const nota = folders[currentAnno].manutenzioni[manutenzioneId].note[index]
-      if (nota) {
-        const { data: noteDb } = await supabase
-          .from('note')
-          .select('id')
-          .eq('manutenzione_id', manutenzioneId)
-          .eq('data', nota.data)
-          .eq('descrizione', nota.desc)
-          .limit(1)
-        if (noteDb && noteDb.length > 0) {
-          await supabase.from('note').delete().eq('id', noteDb[0].id)
+      if (!nota) return
+
+      // Rimuovi subito dalla UI
+      setFolders(prev => {
+        const updated = { ...prev }
+        const manut = { ...updated[currentAnno].manutenzioni[manutenzioneId] }
+        manut.note = manut.note.filter((_, i) => i !== index)
+        updated[currentAnno] = {
+          ...updated[currentAnno],
+          manutenzioni: { ...updated[currentAnno].manutenzioni, [manutenzioneId]: manut }
+        }
+        return updated
+      })
+
+      // Elimina dal database
+      const { data: noteDb } = await supabase
+        .from('note')
+        .select('id')
+        .eq('manutenzione_id', manutenzioneId)
+        .eq('data', nota.data)
+        .eq('descrizione', nota.desc)
+        .limit(1)
+      if (noteDb && noteDb.length > 0) {
+        const { error } = await supabase.from('note').delete().eq('id', noteDb[0].id)
+        if (error) {
+          // Se il delete fallisce, ricarica per ripristinare lo stato corretto
+          if (profile) await loadFolders(profile.palazzina)
         }
       }
-
-      if (profile) await loadFolders(profile.palazzina)
     }
   }
 
