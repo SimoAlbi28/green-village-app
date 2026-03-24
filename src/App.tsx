@@ -7,6 +7,7 @@ import FolderPage from './components/FolderPage'
 import Navbar from './components/Navbar'
 import AuthNavbar from './components/AuthNavbar'
 import ProfileModal from './components/ProfileModal'
+import PullToRefresh from './components/PullToRefresh'
 import { supabase } from './lib/supabase'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -105,6 +106,8 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // Ignora gli auth change durante la registrazione
       if (isRegisteringRef.current) return
+      // Ignora INITIAL_SESSION: è già gestito da getSession() sopra
+      if (event === 'INITIAL_SESSION') return
       if (session?.user) {
         loadProfile(session.user.id, event === 'SIGNED_IN')
       } else {
@@ -119,6 +122,7 @@ export default function App() {
 
   // Carica consiglieri della stessa palazzina
   const [consiglieri, setConsiglieri] = useState<UserProfile[]>([])
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set())
   useEffect(() => {
     if (!profile) return
     supabase
@@ -128,6 +132,28 @@ export default function App() {
       .then(({ data }) => {
         if (data) setConsiglieri(data)
       })
+
+    // Presence: traccia chi è online nella palazzina
+    const presenceChannel = supabase.channel(`presence_${profile.palazzina}`)
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState()
+        const ids = new Set<string>()
+        Object.values(state).forEach((presences: any) => {
+          presences.forEach((p: any) => ids.add(p.user_id))
+        })
+        setOnlineUsers(ids)
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({ user_id: profile.id })
+        }
+      })
+
+    return () => {
+      presenceChannel.untrack()
+      supabase.removeChannel(presenceChannel)
+    }
   }, [profile])
 
   // Ref per ignorare eventi realtime causati dalle proprie azioni
@@ -247,14 +273,18 @@ export default function App() {
     if (!profile) return
     skipRealtimeRef.current = true
     const id = Date.now().toString()
-    const { error } = await supabase.from('cartelle').insert({
+    const { data: inserted, error } = await supabase.from('cartelle').insert({
       id,
       palazzina: profile.palazzina,
       nome,
       anno,
       created_by: profile.id,
-    })
-    if (error) { alert('Errore nel salvataggio.'); return }
+    }).select()
+    if (error) { alert('Errore nel salvataggio: ' + error.message); return }
+    if (!inserted || inserted.length === 0) {
+      alert('Errore: operazione non permessa. Controlla le RLS policies su Supabase.')
+      return
+    }
 
     setFolders((prev) => ({
       ...prev,
@@ -284,7 +314,8 @@ export default function App() {
     }
 
     skipRealtimeRef.current = true
-    await supabase.from('cartelle').update({ nome: nuovoNome }).eq('id', anno)
+    const { error } = await supabase.from('cartelle').update({ nome: nuovoNome }).eq('id', anno)
+    if (error) { alert('Errore nel rinominare: ' + error.message); return }
     setFolders((prev) => ({
       ...prev,
       [anno]: { ...prev[anno], nome: nuovoNome },
@@ -296,7 +327,43 @@ export default function App() {
       confirm(`Sei sicuro di eliminare la cartella "${folders[anno].nome}"?`)
     ) {
       skipRealtimeRef.current = true
-      await supabase.from('cartelle').delete().eq('id', anno)
+
+      // Elimina in cascata: prima note, poi manutenzioni, poi cartella
+      const { data: manuts } = await supabase
+        .from('manutenzioni')
+        .select('id')
+        .eq('cartella_id', anno)
+
+      if (manuts && manuts.length > 0) {
+        const manutIds = manuts.map(m => m.id)
+        await supabase
+          .from('note')
+          .delete()
+          .in('manutenzione_id', manutIds)
+
+        await supabase
+          .from('manutenzioni')
+          .delete()
+          .eq('cartella_id', anno)
+      }
+
+      const { data: deleted, error } = await supabase
+        .from('cartelle')
+        .delete()
+        .eq('id', anno)
+        .select()
+
+      if (error) {
+        alert('Errore eliminazione cartella: ' + error.message)
+        return
+      }
+
+      // RLS può bloccare silenziosamente: verifica che sia stata eliminata davvero
+      if (!deleted || deleted.length === 0) {
+        alert('Errore: operazione non permessa. Controlla le RLS policies su Supabase.')
+        return
+      }
+
       setFolders((prev) => {
         const newFolders = { ...prev }
         delete newFolders[anno]
@@ -452,7 +519,18 @@ export default function App() {
     const nome = folders[currentAnno].manutenzioni[id].nome
     if (confirm(`Sei sicuro di voler eliminare "${nome}"?`)) {
       skipRealtimeRef.current = true
-      await supabase.from('manutenzioni').delete().eq('id', id)
+      // Elimina prima le note collegate
+      await supabase.from('note').delete().eq('manutenzione_id', id)
+      const { data: deleted, error } = await supabase
+        .from('manutenzioni')
+        .delete()
+        .eq('id', id)
+        .select()
+      if (error) { alert('Errore eliminazione: ' + error.message); return }
+      if (!deleted || deleted.length === 0) {
+        alert('Errore: operazione non permessa. Controlla le RLS policies su Supabase.')
+        return
+      }
       setFolders((prev) => ({
         ...prev,
         [currentAnno]: {
@@ -906,12 +984,22 @@ export default function App() {
           profile={profile!}
           userEmail={userEmail}
           consiglieri={consiglieri}
+          onlineUsers={onlineUsers}
           onClose={() => setProfileOpen(false)}
           onLogout={handleLogout}
           onUpdateProfile={handleUpdateProfile}
         />
       )}
-      {page === 'home' ? renderHome() : renderFolder()}
+      <PullToRefresh onRefresh={async () => {
+        if (profile) {
+          await loadFolders(profile.palazzina)
+          // Ricarica anche i consiglieri
+          const { data } = await supabase.from('profiles').select('*').eq('palazzina', profile.palazzina)
+          if (data) setConsiglieri(data)
+        }
+      }}>
+        {page === 'home' ? renderHome() : renderFolder()}
+      </PullToRefresh>
     </div>
   )
 }

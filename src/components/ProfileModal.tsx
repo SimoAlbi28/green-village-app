@@ -7,12 +7,13 @@ interface ProfileModalProps {
   profile: UserProfile
   userEmail: string
   consiglieri: UserProfile[]
+  onlineUsers: Set<string>
   onClose: () => void
   onLogout: () => void
   onUpdateProfile: (updates: { nome: string; cognome: string; telefono?: string; oldPassword?: string; newPassword?: string; avatar_color?: string }) => Promise<{ error?: string } | void>
 }
 
-export default function ProfileModal({ profile, userEmail, consiglieri, onClose, onLogout, onUpdateProfile }: ProfileModalProps) {
+export default function ProfileModal({ profile, userEmail, consiglieri, onlineUsers, onClose, onLogout, onUpdateProfile }: ProfileModalProps) {
   const [profileView, setProfileView] = useState<'profilo' | 'consiglieri'>('profilo')
   const [selectedConsigliere, setSelectedConsigliere] = useState<UserProfile | null>(null)
 
@@ -249,7 +250,11 @@ export default function ProfileModal({ profile, userEmail, consiglieri, onClose,
             <p className="consiglieri-count">Consiglieri: {consiglieri.length}</p>
             <ul className="consiglieri-list">
               {[...consiglieri]
-                .sort((a, b) => (a.id === profile.id ? -1 : b.id === profile.id ? 1 : 0))
+                .sort((a, b) => {
+                  if (a.id === profile.id) return -1
+                  if (b.id === profile.id) return 1
+                  return `${a.nome} ${a.cognome}`.localeCompare(`${b.nome} ${b.cognome}`)
+                })
                 .map((c) => (
                   <li
                     key={c.id}
@@ -257,7 +262,10 @@ export default function ProfileModal({ profile, userEmail, consiglieri, onClose,
                     onClick={() => c.id !== profile.id && setSelectedConsigliere(c)}
                   >
                     <span className="consigliere-initials" style={{ backgroundColor: c.avatar_color || '#1a3a6b' }}>{c.nome[0]}{c.cognome[0]}</span>
-                    <span>{c.nome} {c.cognome}</span>
+                    <span className="consigliere-name-wrap">
+                      {c.nome} {c.cognome}
+                      <span className={`presence-dot ${onlineUsers.has(c.id) ? 'online' : 'offline'}`} />
+                    </span>
                     {c.id === profile.id
                       ? <span className="consigliere-tu">Tu</span>
                       : <span className="consigliere-arrow">›</span>
