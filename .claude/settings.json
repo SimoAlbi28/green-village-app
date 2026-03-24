@@ -21,7 +21,8 @@
       "Bash(node -e \":*)",
       "Bash(KEY=\"sb_secret_35SWeJtlWg1T_gI7rRKDRw_24kOHYbg\" URL=\"https://vbogndiocysnuhusuvle.supabase.co\")",
       "Bash(python3 -m json.tool)",
-      "Bash(python3 -c \"import sys,json; users=json.load\\(sys.stdin\\)[''''users'''']; [print\\(u[''''id'''']\\) for u in users if u[''''email'''']==''''prova2@greenvillage.test'''']\")"
+      "Bash(python3 -c \"import sys,json; users=json.load\\(sys.stdin\\)[''''users'''']; [print\\(u[''''id'''']\\) for u in users if u[''''email'''']==''''prova2@greenvillage.test'''']\")",
+      "Bash(python3 -c \"import sys,json; u=json.load\\(sys.stdin\\); print\\(u[''''id'''']\\)\")"
     ]
   }
 }
