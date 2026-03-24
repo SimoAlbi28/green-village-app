@@ -554,12 +554,13 @@ export default function App() {
       }
     } else {
       // Nuova nota
-      await supabase.from('note').insert({
+      const { error: noteErr } = await supabase.from('note').insert({
         manutenzione_id: id,
         data,
         descrizione: desc,
         created_by: profile.id,
       })
+      if (noteErr) { alert('Errore nel salvataggio nota: ' + noteErr.message); return }
     }
 
     if (profile) await loadFolders(profile.palazzina)
