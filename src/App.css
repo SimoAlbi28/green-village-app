@@ -1814,6 +1814,9 @@ button {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: 45vh;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .consigliere-item {
@@ -1894,6 +1897,31 @@ button {
   margin-top: 16px;
 }
 
+.consigliere-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.presence-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.presence-dot.online {
+  background: #4caf50;
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.5);
+}
+
+.presence-dot.offline {
+  background: #e53935;
+  box-shadow: 0 0 4px rgba(229, 57, 53, 0.3);
+}
+
 .consigliere-self {
   background: #e8f0ff;
   border: 2px solid #1a3a6b;
@@ -1939,4 +1967,82 @@ button {
 .btn-logout {
   cursor: pointer;
   white-space: nowrap;
+}
+
+/* ===== PULL TO REFRESH ===== */
+.pull-to-refresh-container {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  overflow: visible;
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.ptr-indicator {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: 1000;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.ptr-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(45, 106, 45, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.ptr-circle.loading {
+  box-shadow: 0 3px 16px rgba(45, 106, 45, 0.25), 0 0 0 2px rgba(45, 106, 45, 0.15);
+  animation: ptr-pulse 1.2s ease-in-out infinite;
+}
+
+.ptr-circle.done {
+  box-shadow: 0 3px 16px rgba(45, 106, 45, 0.3), 0 0 0 2px rgba(45, 106, 45, 0.2);
+  animation: ptr-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.ptr-arrow {
+  transition: transform 0.15s ease;
+}
+
+.ptr-circle.loading .ptr-arrow {
+  animation: ptr-spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.ptr-check {
+  animation: ptr-draw 0.35s ease forwards;
+}
+
+@keyframes ptr-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ptr-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@keyframes ptr-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes ptr-draw {
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.pull-to-refresh-content {
+  will-change: transform;
 }

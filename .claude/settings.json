@@ -16,7 +16,12 @@
       "Bash(KEY=\"sb_secret_35SWeJtlWg1T_gI7rRKDRw_24kOHYbg\" URL=\"https://vbogndiocysnuhusuvle.supabase.co\" curl -s \"$URL/auth/v1/admin/users\" -H \"apikey: $KEY\" -H \"Authorization: Bearer $KEY\")",
       "Bash(KEY=\"sb_secret_35SWeJtlWg1T_gI7rRKDRw_24kOHYbg\" URL=\"https://vbogndiocysnuhusuvle.supabase.co\" __NEW_LINE_f5c7e7af04038835__ for t in note manutenzioni cartelle)",
       "Bash(do curl:*)",
-      "Bash(KEY=\"sb_secret_35SWeJtlWg1T_gI7rRKDRw_24kOHYbg\" URL=\"https://vbogndiocysnuhusuvle.supabase.co\" __NEW_LINE_a7ad03d8cba08fc5__ for t in note manutenzioni cartelle)"
+      "Bash(KEY=\"sb_secret_35SWeJtlWg1T_gI7rRKDRw_24kOHYbg\" URL=\"https://vbogndiocysnuhusuvle.supabase.co\" __NEW_LINE_a7ad03d8cba08fc5__ for t in note manutenzioni cartelle)",
+      "Bash(git -C /root/simoproject/green-village-app log --oneline)",
+      "Bash(node -e \":*)",
+      "Bash(KEY=\"sb_secret_35SWeJtlWg1T_gI7rRKDRw_24kOHYbg\" URL=\"https://vbogndiocysnuhusuvle.supabase.co\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(python3 -c \"import sys,json; users=json.load\\(sys.stdin\\)[''''users'''']; [print\\(u[''''id'''']\\) for u in users if u[''''email'''']==''''prova2@greenvillage.test'''']\")"
     ]
   }
 }
