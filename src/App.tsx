@@ -7,7 +7,6 @@ import FolderPage from './components/FolderPage'
 import Navbar from './components/Navbar'
 import AuthNavbar from './components/AuthNavbar'
 import ProfileModal from './components/ProfileModal'
-import PullToRefresh from './components/PullToRefresh'
 import { supabase } from './lib/supabase'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -843,6 +842,13 @@ export default function App() {
         onRenameFolder={rinominaCartella}
         onDeleteFolder={eliminaCartella}
         onCopyFolder={copiaTuttoCartella}
+        onRefresh={async () => {
+          if (profile) {
+            await loadFolders(profile.palazzina)
+            const { data } = await supabase.from('profiles').select('*').eq('palazzina', profile.palazzina)
+            if (data) setConsiglieri(data)
+          }
+        }}
       />
     )
   }
@@ -990,16 +996,7 @@ export default function App() {
           onUpdateProfile={handleUpdateProfile}
         />
       )}
-      <PullToRefresh onRefresh={async () => {
-        if (profile) {
-          await loadFolders(profile.palazzina)
-          // Ricarica anche i consiglieri
-          const { data } = await supabase.from('profiles').select('*').eq('palazzina', profile.palazzina)
-          if (data) setConsiglieri(data)
-        }
-      }}>
-        {page === 'home' ? renderHome() : renderFolder()}
-      </PullToRefresh>
+      {page === 'home' ? renderHome() : renderFolder()}
     </div>
   )
 }
