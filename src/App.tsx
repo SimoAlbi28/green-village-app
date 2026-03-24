@@ -156,7 +156,13 @@ export default function App() {
   }, [profile])
 
   // Ref per ignorare eventi realtime causati dalle proprie azioni
-  const skipRealtimeRef = useRef(false)
+  const skipRealtimeUntilRef = useRef(0)
+
+  const setSkipRealtime = () => {
+    skipRealtimeUntilRef.current = Date.now() + 10000 // ignora realtime per 10 secondi
+  }
+
+  const isSkipping = () => Date.now() < skipRealtimeUntilRef.current
 
   // Carica folders dalle tabelle separate e ricostruisce la struttura Folders
   const loadFolders = async (palazzina: string) => {
@@ -189,24 +195,26 @@ export default function App() {
       }
     }
 
-    // Ricostruisci la struttura Folders
-    const newFolders: Folders = {}
-    for (const c of cartelleData) {
-      const manuts: Record<string, any> = {}
-      for (const m of manutenzioniData.filter(m => m.cartella_id === c.id)) {
-        const notePerM = noteData
-          .filter(n => n.manutenzione_id === m.id)
-          .map(n => ({ data: n.data, desc: n.descrizione }))
-        manuts[m.id] = {
-          nome: m.nome,
-          note: notePerM,
-          expanded: false,
-          qrId: m.qr_id || undefined,
+    // Ricostruisci la struttura Folders preservando lo stato expanded
+    setFolders(prev => {
+      const newFolders: Folders = {}
+      for (const c of cartelleData) {
+        const manuts: Record<string, any> = {}
+        for (const m of manutenzioniData.filter(m => m.cartella_id === c.id)) {
+          const notePerM = noteData
+            .filter(n => n.manutenzione_id === m.id)
+            .map(n => ({ data: n.data, desc: n.descrizione }))
+          manuts[m.id] = {
+            nome: m.nome,
+            note: notePerM,
+            expanded: prev[c.id]?.manutenzioni[m.id]?.expanded ?? false,
+            qrId: m.qr_id || undefined,
+          }
         }
+        newFolders[c.id] = { nome: c.nome, anno: c.anno, manutenzioni: manuts }
       }
-      newFolders[c.id] = { nome: c.nome, anno: c.anno, manutenzioni: manuts }
-    }
-    setFolders(newFolders)
+      return newFolders
+    })
     setLoading(false)
   }
 
@@ -214,19 +222,19 @@ export default function App() {
     if (!profile) return
     loadFolders(profile.palazzina)
 
-    // Realtime: ascolta modifiche su tutte e 3 le tabelle
+    // Realtime: ascolta modifiche da altri utenti su tutte e 3 le tabelle
     const channel = supabase
       .channel(`realtime_${profile.palazzina}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cartelle' }, () => {
-        if (skipRealtimeRef.current) { skipRealtimeRef.current = false; return }
+        if (isSkipping()) return
         loadFolders(profile.palazzina)
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'manutenzioni' }, () => {
-        if (skipRealtimeRef.current) { skipRealtimeRef.current = false; return }
+        if (isSkipping()) return
         loadFolders(profile.palazzina)
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'note' }, () => {
-        if (skipRealtimeRef.current) { skipRealtimeRef.current = false; return }
+        if (isSkipping()) return
         loadFolders(profile.palazzina)
       })
       .subscribe()
@@ -270,7 +278,7 @@ export default function App() {
     }
 
     if (!profile) return
-    skipRealtimeRef.current = true
+    setSkipRealtime()
     const id = Date.now().toString()
     const { data: inserted, error } = await supabase.from('cartelle').insert({
       id,
@@ -285,10 +293,7 @@ export default function App() {
       return
     }
 
-    setFolders((prev) => ({
-      ...prev,
-      [id]: { nome, anno, manutenzioni: {} },
-    }))
+    await loadFolders(profile.palazzina)
     setYearInput('')
     setFolderNameInput('')
     setShowYearModal(false)
@@ -312,20 +317,17 @@ export default function App() {
       return
     }
 
-    skipRealtimeRef.current = true
+    setSkipRealtime()
     const { error } = await supabase.from('cartelle').update({ nome: nuovoNome }).eq('id', anno)
     if (error) { alert('Errore nel rinominare: ' + error.message); return }
-    setFolders((prev) => ({
-      ...prev,
-      [anno]: { ...prev[anno], nome: nuovoNome },
-    }))
+    if (profile) await loadFolders(profile.palazzina)
   }
 
   const eliminaCartella = async (anno: string) => {
     if (
       confirm(`Sei sicuro di eliminare la cartella "${folders[anno].nome}"?`)
     ) {
-      skipRealtimeRef.current = true
+      setSkipRealtime()
 
       // Elimina in cascata: prima note, poi manutenzioni, poi cartella
       const { data: manuts } = await supabase
@@ -363,11 +365,7 @@ export default function App() {
         return
       }
 
-      setFolders((prev) => {
-        const newFolders = { ...prev }
-        delete newFolders[anno]
-        return newFolders
-      })
+      if (profile) await loadFolders(profile.palazzina)
     }
   }
 
@@ -454,7 +452,7 @@ export default function App() {
       return
     }
 
-    skipRealtimeRef.current = true
+    setSkipRealtime()
     const id = Date.now().toString()
     const { error } = await supabase.from('manutenzioni').insert({
       id,
@@ -465,16 +463,7 @@ export default function App() {
     })
     if (error) { alert('Errore nel salvataggio.'); return }
 
-    setFolders((prev) => ({
-      ...prev,
-      [currentAnno]: {
-        ...prev[currentAnno],
-        manutenzioni: {
-          ...prev[currentAnno].manutenzioni,
-          [id]: { nome, note: [], expanded: true, qrId: pendingQrId || undefined },
-        },
-      },
-    }))
+    if (profile) await loadFolders(profile.palazzina)
     setNomeInput('')
     setPendingQrId(null)
     setShowNomeModal(false)
@@ -499,25 +488,16 @@ export default function App() {
       return
     }
 
-    skipRealtimeRef.current = true
+    setSkipRealtime()
     await supabase.from('manutenzioni').update({ nome: nuovoNome }).eq('id', id)
-    setFolders((prev) => ({
-      ...prev,
-      [currentAnno]: {
-        ...prev[currentAnno],
-        manutenzioni: {
-          ...prev[currentAnno].manutenzioni,
-          [id]: { ...manutenzione, nome: nuovoNome },
-        },
-      },
-    }))
+    if (profile) await loadFolders(profile.palazzina)
   }
 
   const eliminaManutenzione = async (id: string) => {
     if (!currentAnno) return
     const nome = folders[currentAnno].manutenzioni[id].nome
     if (confirm(`Sei sicuro di voler eliminare "${nome}"?`)) {
-      skipRealtimeRef.current = true
+      setSkipRealtime()
       // Elimina prima le note collegate
       await supabase.from('note').delete().eq('manutenzione_id', id)
       const { data: deleted, error } = await supabase
@@ -530,17 +510,7 @@ export default function App() {
         alert('Errore: operazione non permessa. Controlla le RLS policies su Supabase.')
         return
       }
-      setFolders((prev) => ({
-        ...prev,
-        [currentAnno]: {
-          ...prev[currentAnno],
-          manutenzioni: Object.fromEntries(
-            Object.entries(prev[currentAnno].manutenzioni).filter(
-              ([key]) => key !== id,
-            ),
-          ),
-        },
-      }))
+      if (profile) await loadFolders(profile.palazzina)
     }
   }
 
@@ -572,7 +542,7 @@ export default function App() {
       return
     }
 
-    skipRealtimeRef.current = true
+    setSkipRealtime()
     if (noteInModifica && noteInModifica.manutenzioneId === id) {
       // Modifica nota esistente: recupera l'id della nota dal DB
       const { data: noteDb } = await supabase
@@ -592,34 +562,14 @@ export default function App() {
       })
     }
 
-    setFolders((prev) => ({
-      ...prev,
-      [currentAnno]: {
-        ...prev[currentAnno],
-        manutenzioni: {
-          ...prev[currentAnno].manutenzioni,
-          [id]: {
-            ...prev[currentAnno].manutenzioni[id],
-            note:
-              noteInModifica && noteInModifica.manutenzioneId === id
-                ? prev[currentAnno].manutenzioni[id].note.map((n, idx) =>
-                    idx === noteInModifica.noteIndex ? { data, desc } : n,
-                  )
-                : [
-                    ...prev[currentAnno].manutenzioni[id].note,
-                    { data, desc },
-                  ],
-          },
-        },
-      },
-    }))
+    if (profile) await loadFolders(profile.palazzina)
     setNoteInModifica(null)
   }
 
   const eliminaNota = async (id: string, index: number) => {
     if (!currentAnno) return
     if (confirm('Sei sicuro di voler eliminare questa nota?')) {
-      skipRealtimeRef.current = true
+      setSkipRealtime()
       // Recupera l'id della nota dal DB
       const { data: noteDb } = await supabase
         .from('note')
@@ -629,21 +579,7 @@ export default function App() {
         await supabase.from('note').delete().eq('id', noteDb[index].id)
       }
 
-      setFolders((prev) => ({
-        ...prev,
-        [currentAnno]: {
-          ...prev[currentAnno],
-          manutenzioni: {
-            ...prev[currentAnno].manutenzioni,
-            [id]: {
-              ...prev[currentAnno].manutenzioni[id],
-              note: prev[currentAnno].manutenzioni[id].note.filter(
-                (_, idx) => idx !== index,
-              ),
-            },
-          },
-        },
-      }))
+      if (profile) await loadFolders(profile.palazzina)
     }
   }
 
@@ -886,6 +822,13 @@ export default function App() {
         onAddManutenzione={aggiungiManutenzione}
         onStartScan={avviaScanner}
         onStopScan={fermaScanner}
+        onRefresh={async () => {
+          if (profile) {
+            await loadFolders(profile.palazzina)
+            const { data } = await supabase.from('profiles').select('*').eq('palazzina', profile.palazzina)
+            if (data) setConsiglieri(data)
+          }
+        }}
         nomeInputRef={nomeInputRef}
         manutenzioniListRef={manutenzioniListRef}
         pageFolderRef={pageFolderRef}

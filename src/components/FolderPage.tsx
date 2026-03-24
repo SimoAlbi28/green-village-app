@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Cartella, Note } from '../types'
 import ManutenzionCard from './ManutenzionCard'
 
@@ -21,6 +22,7 @@ interface FolderPageProps {
   onAddManutenzione: () => void
   onStartScan: () => void
   onStopScan: () => void
+  onRefresh: () => Promise<void>
   nomeInputRef: React.RefObject<HTMLInputElement | null>
   manutenzioniListRef: React.RefObject<HTMLDivElement | null>
   pageFolderRef: React.RefObject<HTMLDivElement | null>
@@ -47,11 +49,24 @@ export default function FolderPage({
   onAddManutenzione,
   onStartScan,
   onStopScan,
+  onRefresh,
   nomeInputRef,
   manutenzioniListRef,
   pageFolderRef,
   readerRef,
 }: FolderPageProps) {
+  const [refreshing, setRefreshing] = useState(false)
+
+  const handleRefresh = async () => {
+    if (refreshing) return
+    setRefreshing(true)
+    await Promise.all([
+      onRefresh(),
+      new Promise(resolve => setTimeout(resolve, 2000))
+    ])
+    setRefreshing(false)
+  }
+
   const manutenzioni = Object.entries(cartella.manutenzioni).sort((a, b) =>
     a[1].nome.localeCompare(b[1].nome),
   )
@@ -62,6 +77,11 @@ export default function FolderPage({
 
   return (
     <div className="page-folder" ref={pageFolderRef}>
+      {refreshing && (
+        <div className="refresh-overlay">
+          <div className="refresh-spinner" />
+        </div>
+      )}
       <header id="tit1">
         <div className="title-top">{cartella.nome.toUpperCase()}</div>
         <div style={{ fontSize: '1.2rem', color: 'white', marginTop: '5px' }}>
@@ -73,6 +93,14 @@ export default function FolderPage({
         <div className="row-btns">
           <button id="create-manutenzione" onClick={() => onSetShowNomeModal(true)}>
             ➕ Aggiungi
+          </button>
+          <button className="btn-refresh" onClick={handleRefresh} disabled={refreshing} title="Sincronizza aggiornamenti">
+            <svg className={`refresh-icon${refreshing ? ' spinning' : ''}`} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 4v6h-6" />
+              <path d="M1 20v-6h6" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
+              <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14" />
+            </svg>
           </button>
           <button
             id="start-scan"

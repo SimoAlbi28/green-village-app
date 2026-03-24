@@ -45,13 +45,22 @@ export default function HomePage({
   )
 
   const handleRefresh = async () => {
+    if (refreshing) return
     setRefreshing(true)
-    await onRefresh()
+    await Promise.all([
+      onRefresh(),
+      new Promise(resolve => setTimeout(resolve, 2000))
+    ])
     setRefreshing(false)
   }
 
   return (
     <div className="page-home">
+      {refreshing && (
+        <div className="refresh-overlay">
+          <div className="refresh-spinner" />
+        </div>
+      )}
       <Header titleTop="GREEN VILLAGE" titleBottom={`PALAZZINA ${profile.palazzina}`} />
 
       <div className="home-topbar">

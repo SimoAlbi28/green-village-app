@@ -1977,12 +1977,12 @@ button {
 .btn-refresh {
   background: white;
   color: #333;
-  border: 1px solid #ccc;
+  border: 1px solid black;
   border-radius: 10px;
-  width: 46px;
-  height: 46px;
-  min-width: 46px;
-  min-height: 46px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -1993,6 +1993,10 @@ button {
 
 .btn-refresh:active {
   background: #f0f0f0;
+}
+
+.row-btns .btn-refresh {
+  flex: 0 0 40px;
 }
 
 .btn-refresh:disabled {
@@ -2022,6 +2026,32 @@ button {
 .home-section-title-wrap {
   text-align: center;
   margin: 14px 0 12px 0;
+}
+
+/* ===== REFRESH OVERLAY ===== */
+.refresh-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: overlay-fade-in 0.2s ease;
+}
+
+.refresh-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: refresh-spin 0.8s linear infinite;
+}
+
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes refresh-spin {
