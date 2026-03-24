@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Folders, UserProfile } from '../types'
 import FolderCard from './FolderCard'
 import Header from './Header'
@@ -16,6 +17,7 @@ interface HomePageProps {
   onRenameFolder: (anno: string) => void
   onDeleteFolder: (anno: string) => void
   onCopyFolder: (anno: string) => void
+  onRefresh: () => Promise<void>
 }
 
 export default function HomePage({
@@ -32,13 +34,21 @@ export default function HomePage({
   onRenameFolder,
   onDeleteFolder,
   onCopyFolder,
+  onRefresh,
 }: HomePageProps) {
+  const [refreshing, setRefreshing] = useState(false)
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i)
 
   const cartelleOrdinate = Object.entries(folders).sort((a, b) =>
     parseInt(b[1].anno) - parseInt(a[1].anno)
   )
+
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await onRefresh()
+    setRefreshing(false)
+  }
 
   return (
     <div className="page-home">
@@ -48,6 +58,18 @@ export default function HomePage({
         <button id="btn-add-folder" onClick={() => { onSetYearInput(String(currentYear)); onSetShowYearModal(true) }}>
           ➕ Nuova Cartella
         </button>
+        <button className="btn-refresh" onClick={handleRefresh} disabled={refreshing} title="Sincronizza aggiornamenti">
+          <svg className={`refresh-icon${refreshing ? ' spinning' : ''}`} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 4v6h-6" />
+            <path d="M1 20v-6h6" />
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
+            <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="home-section-title-wrap">
+        <span className="home-section-title">CARTELLE</span>
       </div>
 
       <div id="folders-list" className={cartelleOrdinate.length === 1 ? 'single-folder' : ''}>

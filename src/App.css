@@ -311,8 +311,6 @@ h1 {
   transition: background-color 0.3s ease;
   max-width: 170px;
   width: 100%;
-  display: block;
-  margin: 0 auto 20px auto;
   box-sizing: border-box;
 }
 
@@ -1958,10 +1956,16 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  margin-bottom: 4px;
-  flex-wrap: wrap;
+  margin-top: -20px;
+  margin-bottom: 0;
+  padding-bottom: 28px;
+  border-bottom: none;
+  background-image: linear-gradient(to right, transparent, rgba(0,0,0,0.25) 20%, rgba(0,0,0,0.25) 80%, transparent);
+  background-size: 100% 1px;
+  background-repeat: no-repeat;
+  background-position: bottom;
 }
 
 .btn-logout {
@@ -1969,80 +1973,57 @@ button {
   white-space: nowrap;
 }
 
-/* ===== PULL TO REFRESH ===== */
-.pull-to-refresh-container {
-  position: relative;
-  width: 100%;
-  flex: 1;
-  overflow: visible;
-  touch-action: pan-y;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-.ptr-indicator {
-  position: fixed;
-  top: 0;
-  left: 50%;
-  z-index: 1000;
-  pointer-events: none;
-  transition: opacity 0.25s ease;
-}
-
-.ptr-circle {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
+/* ===== REFRESH BUTTON ===== */
+.btn-refresh {
   background: white;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(45, 106, 45, 0.08);
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  min-height: 46px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
-.ptr-circle.loading {
-  box-shadow: 0 3px 16px rgba(45, 106, 45, 0.25), 0 0 0 2px rgba(45, 106, 45, 0.15);
-  animation: ptr-pulse 1.2s ease-in-out infinite;
+.btn-refresh:active {
+  background: #f0f0f0;
 }
 
-.ptr-circle.done {
-  box-shadow: 0 3px 16px rgba(45, 106, 45, 0.3), 0 0 0 2px rgba(45, 106, 45, 0.2);
-  animation: ptr-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+.btn-refresh:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
-.ptr-arrow {
-  transition: transform 0.15s ease;
+.refresh-icon.spinning {
+  animation: refresh-spin 0.8s linear infinite;
 }
 
-.ptr-circle.loading .ptr-arrow {
-  animation: ptr-spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+.home-section-title {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #00838f 0%, #4dd0e1 50%, #006064 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 auto;
+  display: inline-block;
+  width: auto;
 }
 
-.ptr-check {
-  animation: ptr-draw 0.35s ease forwards;
+.home-section-title-wrap {
+  text-align: center;
+  margin: 14px 0 12px 0;
 }
 
-@keyframes ptr-spin {
+@keyframes refresh-spin {
   to { transform: rotate(360deg); }
-}
-
-@keyframes ptr-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-}
-
-@keyframes ptr-pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-
-@keyframes ptr-draw {
-  0% { opacity: 0; transform: scale(0.5); }
-  100% { opacity: 1; transform: scale(1); }
-}
-
-.pull-to-refresh-content {
-  will-change: transform;
 }
