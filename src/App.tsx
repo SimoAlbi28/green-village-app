@@ -544,13 +544,19 @@ export default function App() {
 
     setSkipRealtime()
     if (noteInModifica && noteInModifica.manutenzioneId === id) {
-      // Modifica nota esistente: recupera l'id della nota dal DB
-      const { data: noteDb } = await supabase
-        .from('note')
-        .select('id')
-        .eq('manutenzione_id', id)
-      if (noteDb && noteDb[noteInModifica.noteIndex]) {
-        await supabase.from('note').update({ data, descrizione: desc }).eq('id', noteDb[noteInModifica.noteIndex].id)
+      // Modifica nota esistente: trova per data+descrizione originali
+      const notaOriginale = folders[currentAnno].manutenzioni[id].note[noteInModifica.noteIndex]
+      if (notaOriginale) {
+        const { data: noteDb } = await supabase
+          .from('note')
+          .select('id')
+          .eq('manutenzione_id', id)
+          .eq('data', notaOriginale.data)
+          .eq('descrizione', notaOriginale.desc)
+          .limit(1)
+        if (noteDb && noteDb.length > 0) {
+          await supabase.from('note').update({ data, descrizione: desc }).eq('id', noteDb[0].id)
+        }
       }
     } else {
       // Nuova nota
@@ -567,17 +573,23 @@ export default function App() {
     setNoteInModifica(null)
   }
 
-  const eliminaNota = async (id: string, index: number) => {
+  const eliminaNota = async (manutenzioneId: string, index: number) => {
     if (!currentAnno) return
     if (confirm('Sei sicuro di voler eliminare questa nota?')) {
       setSkipRealtime()
-      // Recupera l'id della nota dal DB
-      const { data: noteDb } = await supabase
-        .from('note')
-        .select('id')
-        .eq('manutenzione_id', id)
-      if (noteDb && noteDb[index]) {
-        await supabase.from('note').delete().eq('id', noteDb[index].id)
+      // Trova la nota da eliminare usando data e descrizione
+      const nota = folders[currentAnno].manutenzioni[manutenzioneId].note[index]
+      if (nota) {
+        const { data: noteDb } = await supabase
+          .from('note')
+          .select('id')
+          .eq('manutenzione_id', manutenzioneId)
+          .eq('data', nota.data)
+          .eq('descrizione', nota.desc)
+          .limit(1)
+        if (noteDb && noteDb.length > 0) {
+          await supabase.from('note').delete().eq('id', noteDb[0].id)
+        }
       }
 
       if (profile) await loadFolders(profile.palazzina)
